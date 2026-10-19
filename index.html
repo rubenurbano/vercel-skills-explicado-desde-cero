@@ -1,0 +1,2405 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<title>Tutorial Vercel Skills para principiantes — V001</title>
+<script>
+/* Aplica tema y tamaño de letra guardados antes del primer pintado, con protección ante fallos de localStorage. */
+try {
+  var savedTheme = localStorage.getItem('vs-theme');
+  if (savedTheme === 'light') { document.documentElement.setAttribute('data-theme', 'light'); }
+  var savedFont = parseInt(localStorage.getItem('vs-font'), 10);
+  if (savedFont >= 85 && savedFont <= 125) { document.documentElement.style.fontSize = savedFont + '%'; }
+} catch (e) { /* Si localStorage está bloqueado, se usan los valores por defecto. */ }
+</script>
+<style>
+/* ============================================================
+   1. VARIABLES Y BASE
+   ============================================================ */
+:root{
+  --bg:#0a0e1a;
+  --card:#0f172a;
+  --blue:#1e3a5f;
+  --text:#e2e8f0;
+  --muted:#94a3b8;
+  --accent:#38bdf8;
+  --accent-2:#22d3ee;
+  --border:rgba(148,163,184,.22);
+  --accent-soft:rgba(56,189,248,.12);
+  --ok:#34d399;
+  --warn:#fbbf24;
+  --danger:#f87171;
+  --code-bg:#020617;
+  --radius:16px;
+  --shadow:0 12px 30px rgba(0,0,0,.28);
+  --font:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+}
+html[data-theme="light"]{
+  --bg:#f3f6fb;
+  --card:#ffffff;
+  --blue:#dbeafe;
+  --text:#0f172a;
+  --muted:#475569;
+  --accent:#0369a1;
+  --accent-2:#0e7490;
+  --border:#cbd5e1;
+  --accent-soft:#e0f2fe;
+  --ok:#047857;
+  --warn:#b45309;
+  --danger:#b91c1c;
+  --code-bg:#0f172a;
+  --shadow:0 10px 24px rgba(15,23,42,.08);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font);
+  font-size:1rem;
+  line-height:1.68;
+  -webkit-text-size-adjust:100%;
+}
+[hidden]{display:none !important}
+img,svg{max-width:100%}
+a{color:var(--accent);text-underline-offset:.18em}
+a:hover{color:var(--accent-2)}
+button,input,summary{font:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+::selection{background:var(--accent);color:#001018}
+.sr-only{
+  position:absolute !important;width:1px;height:1px;padding:0;margin:-1px;
+  overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;
+}
+.skip{
+  position:absolute;left:1rem;top:-100px;z-index:200;
+  background:var(--accent);color:#001018;padding:.7rem 1rem;border-radius:10px;font-weight:700;
+}
+.skip:focus{top:1rem}
+/* ============================================================
+   2. BARRA DE PROGRESO Y CABECERA
+   ============================================================ */
+#progressWrap{
+  position:fixed;top:0;left:0;right:0;height:4px;z-index:120;
+  background:transparent;pointer-events:none;
+}
+#progressBar{
+  height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent-2));
+  transition:width .12s linear;
+}
+.app-header{
+  padding:.9rem 1rem .35rem;
+  background:linear-gradient(180deg,rgba(15,23,42,.96),rgba(10,14,26,.9));
+  border-bottom:1px solid var(--border);
+}
+html[data-theme="light"] .app-header{
+  background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(243,246,251,.96));
+}
+.topbar{
+  max-width:1120px;margin:0 auto;
+  display:flex;flex-wrap:wrap;gap:.75rem 1rem;align-items:center;justify-content:space-between;
+}
+.brand{min-width:220px;flex:1 1 320px}
+.brand .kicker{
+  margin:0 0 .15rem;color:var(--accent);font-size:.74rem;font-weight:800;
+  letter-spacing:.12em;text-transform:uppercase;
+}
+.brand h1{
+  margin:0;font-size:clamp(1.05rem,2.7vw,1.45rem);line-height:1.25;letter-spacing:-.02em;
+}
+.brand p{margin:.22rem 0 0;color:var(--muted);font-size:.82rem}
+.toolbar{
+  display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;justify-content:flex-end;
+}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:.35rem;
+  min-height:40px;padding:.45rem .72rem;border-radius:10px;
+  border:1px solid var(--border);background:var(--card);color:var(--text);
+  font-size:.82rem;font-weight:650;line-height:1.1;
+  transition:background .15s,border-color .15s,transform .1s;
+}
+.btn:hover{border-color:var(--accent);background:var(--accent-soft)}
+.btn:active{transform:translateY(1px)}
+.btn[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-accent{background:var(--accent);color:#001018;border-color:var(--accent)}
+.btn-accent:hover{background:var(--accent-2);color:#001018}
+.searchbar{
+  max-width:1120px;margin:.7rem auto 0;
+  background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:.65rem;box-shadow:var(--shadow);
+}
+.searchbar label{display:block;font-size:.76rem;font-weight:750;color:var(--muted);margin:0 0 .35rem}
+.search-row{display:flex;gap:.5rem}
+.search-row input{
+  flex:1 1 auto;min-width:0;padding:.65rem .75rem;border-radius:10px;
+  border:1px solid var(--border);background:var(--bg);color:var(--text);
+}
+#searchResults{margin-top:.5rem;max-height:52vh;overflow:auto;display:grid;gap:.4rem}
+.search-result{
+  display:block;width:100%;text-align:left;padding:.6rem .7rem;border-radius:10px;
+  border:1px solid var(--border);background:var(--bg);color:var(--text);
+}
+.search-result:hover{border-color:var(--accent);background:var(--accent-soft)}
+.search-result .sr-tab{
+  display:inline-block;font-size:.66rem;font-weight:800;letter-spacing:.08em;
+  color:var(--accent);text-transform:uppercase;margin-right:.45rem;
+}
+.search-result .sr-text{font-size:.84rem;color:var(--text)}
+.search-empty{color:var(--muted);font-size:.86rem;padding:.4rem}
+/* Pestañas */
+.tabs{
+  position:sticky;top:0;z-index:60;
+  max-width:1120px;margin:.6rem auto 0;
+  display:flex;gap:.3rem;overflow-x:auto;padding:.45rem .1rem;
+  background:rgba(10,14,26,.97);
+  border-bottom:1px solid var(--border);
+  scrollbar-width:thin;
+}
+html[data-theme="light"] .tabs{background:rgba(243,246,251,.97)}
+.tab{
+  flex:0 0 auto;white-space:nowrap;
+  padding:.55rem .75rem;border-radius:9px 9px 0 0;
+  border:1px solid transparent;border-bottom:0;
+  background:transparent;color:var(--muted);
+  font-size:.73rem;font-weight:800;letter-spacing:.045em;
+}
+.tab:hover{color:var(--text);background:var(--accent-soft)}
+.tab[aria-selected="true"]{
+  color:var(--text);background:var(--card);
+  border-color:var(--border);box-shadow:inset 0 3px 0 var(--accent);
+}
+/* ============================================================
+   3. CONTENIDO
+   ============================================================ */
+main{max-width:1120px;margin:0 auto;padding:1rem 1rem 3.5rem}
+.panel{animation:fade .22s ease-out}
+@keyframes fade{from{opacity:.35;transform:translateY(4px)}to{opacity:1;transform:none}}
+.hero{padding:.5rem 0 .2rem}
+.eyebrow{
+  margin:0 0 .45rem;color:var(--accent);font-size:.75rem;font-weight:850;
+  letter-spacing:.13em;text-transform:uppercase;
+}
+.hero h2, .hero h1{
+  margin:0 0 .5rem;font-size:clamp(1.65rem,5vw,2.75rem);line-height:1.12;letter-spacing:-.035em;
+}
+.lead{font-size:clamp(1rem,2.2vw,1.16rem);color:var(--muted);max-width:72ch;margin:.2rem 0 0}
+h2{font-size:clamp(1.35rem,3.4vw,1.85rem);line-height:1.2;letter-spacing:-.025em;margin:2rem 0 .7rem}
+h3{font-size:clamp(1.08rem,2.6vw,1.3rem);line-height:1.3;margin:1.5rem 0 .5rem}
+h4{font-size:1rem;margin:1.1rem 0 .4rem}
+p{margin:.55rem 0}
+ul,ol{padding-left:1.35rem}
+li{margin:.28rem 0}
+strong{font-weight:800}
+.small{font-size:.84rem;color:var(--muted)}
+.center{text-align:center}
+.grid{display:grid;gap:.85rem}
+.grid-2{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.grid-3{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:1rem;box-shadow:var(--shadow);
+}
+.card h3,.card h4{margin-top:0}
+.card p:last-child,.card ul:last-child,.card ol:last-child{margin-bottom:0}
+.card-accent{border-color:rgba(56,189,248,.45);background:linear-gradient(180deg,var(--accent-soft),var(--card) 55%)}
+.card-soft{background:var(--accent-soft);box-shadow:none}
+.callout{
+  margin:1rem 0;padding:.85rem 1rem;border-radius:12px;
+  border:1px solid var(--border);border-left:4px solid var(--accent);
+  background:var(--card);
+}
+.callout p:first-child{margin-top:0}
+.callout p:last-child{margin-bottom:0}
+.callout.warn{border-left-color:var(--warn);background:rgba(251,191,36,.07)}
+.callout.danger{border-left-color:var(--danger);background:rgba(248,113,113,.07)}
+.callout.ok{border-left-color:var(--ok);background:rgba(52,211,153,.07)}
+.callout.info{border-left-color:var(--accent);background:var(--accent-soft)}
+.tag{
+  display:inline-block;padding:.14rem .42rem;border-radius:999px;
+  font-size:.66rem;font-weight:850;letter-spacing:.06em;text-transform:uppercase;
+  border:1px solid var(--border);color:var(--muted);vertical-align:middle;
+}
+.tag-warn{color:#111827;background:var(--warn);border-color:var(--warn)}
+.tag-ok{color:#052e1b;background:var(--ok);border-color:var(--ok)}
+.tag-info{color:#001018;background:var(--accent);border-color:var(--accent)}
+.tag-danger{color:#2b0505;background:var(--danger);border-color:var(--danger)}
+/* SVG */
+.svg-mount{
+  width:100%;min-height:150px;margin:1rem 0 .4rem;
+  display:flex;align-items:center;justify-content:center;
+  background:#0b1220;border:1px solid var(--border);border-radius:18px;overflow:hidden;
+}
+.svg-mount svg,.svg-mount img{display:block;width:100%;height:auto}
+.svg-caption{margin:.2rem 0 1rem;color:var(--muted);font-size:.8rem;text-align:center}
+/* Código */
+pre{
+  margin:1rem 0;padding:1rem;border-radius:12px;overflow:auto;
+  background:var(--code-bg);color:#e2e8f0;
+  border:1px solid var(--border);
+  font-family:var(--mono);font-size:.84rem;line-height:1.58;
+  tab-size:2;white-space:pre;
+}
+code{
+  font-family:var(--mono);font-size:.9em;
+  background:rgba(148,163,184,.15);padding:.12em .35em;border-radius:6px;
+}
+pre code{background:none;padding:0;border-radius:0;font-size:inherit}
+kbd{
+  font-family:var(--mono);font-size:.82em;padding:.12rem .38rem;border-radius:6px;
+  border:1px solid var(--border);border-bottom-width:2px;background:var(--card);
+}
+.copyblock{position:relative;margin:1rem 0}
+.copyblock .copy-content{margin:0}
+.copyblock pre{padding:2.7rem 1rem 1rem}
+.copyblock ul.copy-content,.copyblock ol.copy-content{
+  padding:2.7rem 1rem 1rem 2rem;background:var(--code-bg);color:#e2e8f0;
+  border:1px solid var(--border);border-radius:12px;font-family:var(--mono);font-size:.84rem;
+}
+.copy-btn{
+  position:absolute;top:.55rem;right:.55rem;z-index:3;
+  padding:.34rem .55rem;border-radius:8px;border:1px solid rgba(226,232,240,.3);
+  background:#1e293b;color:#e2e8f0;font-size:.68rem;font-weight:850;letter-spacing:.07em;
+}
+.copy-btn:hover{background:var(--accent);color:#001018;border-color:var(--accent)}
+.copy-btn.copied{background:var(--ok);color:#052e1b;border-color:var(--ok)}
+/* Tablas */
+.table-wrap{width:100%;overflow-x:auto;margin:1rem 0;border:1px solid var(--border);border-radius:12px}
+table{width:100%;border-collapse:collapse;font-size:.86rem;min-width:560px;background:var(--card)}
+caption{caption-side:top;text-align:left;padding:.6rem .75rem;color:var(--muted);font-size:.8rem}
+th,td{padding:.62rem .7rem;border-bottom:1px solid var(--border);vertical-align:top;text-align:left}
+th{background:var(--accent-soft);font-size:.76rem;letter-spacing:.03em;text-transform:uppercase}
+tr:last-child td{border-bottom:0}
+tbody tr:hover{background:rgba(56,189,248,.05)}
+/* Diagramas de flujo */
+.flow{
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.45rem;
+  padding:.9rem;border:1px dashed var(--border);border-radius:14px;background:var(--card);
+}
+.flow-node{
+  padding:.55rem .7rem;border-radius:10px;border:1px solid var(--border);
+  background:var(--bg);font-size:.78rem;font-weight:750;text-align:center;
+}
+.flow-node.accent{border-color:var(--accent);background:var(--accent-soft);color:var(--text)}
+.flow-arrow{color:var(--accent);font-size:1.15rem;font-weight:900}
+/* Pasos */
+.step{
+  position:relative;margin:1rem 0;padding:1rem 1rem 1rem 3.4rem;
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+}
+.step-num{
+  position:absolute;left:.85rem;top:.85rem;
+  width:1.85rem;height:1.85rem;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--accent);color:#001018;font-weight:900;font-size:.85rem;
+}
+.step h3{margin:0 0 .35rem;font-size:1.05rem}
+.step .goal{color:var(--muted);font-size:.84rem;margin:0 0 .55rem}
+/* Desplegables */
+details.fold{
+  margin:1rem 0;background:var(--card);border:1px solid var(--border);
+  border-radius:14px;overflow:hidden;
+}
+details.fold summary{
+  cursor:pointer;padding:.85rem 1rem;font-weight:750;list-style:none;
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;
+}
+details.fold summary::-webkit-details-marker{display:none}
+details.fold summary::after{
+  content:"+";flex:0 0 auto;width:1.4rem;height:1.4rem;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--accent-soft);color:var(--accent);font-weight:900;
+}
+details.fold[open] summary::after{content:"−"}
+details.fold .fold-body{padding:0 1rem 1rem;border-top:1px solid var(--border)}
+details.fold .fold-body > :first-child{margin-top:.8rem}
+/* Listas de comprobación */
+.checklist{list-style:none;padding:0;margin:.7rem 0;display:grid;gap:.45rem}
+.checklist li{margin:0}
+.check{
+  display:flex;gap:.6rem;align-items:flex-start;
+  padding:.55rem .65rem;border:1px solid var(--border);border-radius:10px;
+  background:var(--bg);font-size:.88rem;
+}
+.check input{
+  flex:0 0 auto;width:1.12rem;height:1.12rem;margin:.18rem 0 0;
+  accent-color:var(--accent);
+}
+.check:has(input:checked){border-color:var(--ok);background:rgba(52,211,153,.08)}
+.check-count{font-size:.76rem;font-weight:800;color:var(--accent)}
+/* Varios */
+.badge-row{display:flex;flex-wrap:wrap;gap:.35rem;margin:.6rem 0}
+.kv{display:grid;grid-template-columns:minmax(120px,180px) 1fr;gap:.35rem .8rem;font-size:.88rem}
+.kv dt{font-weight:800;color:var(--muted)}
+.kv dd{margin:0}
+.hr{height:1px;background:var(--border);margin:1.5rem 0;border:0}
+.flash{animation:flash 1.6s ease-out}
+@keyframes flash{0%,35%{box-shadow:0 0 0 4px rgba(56,189,248,.55)}100%{box-shadow:none}}
+#toTop{
+  position:fixed;right:1rem;bottom:1rem;z-index:90;
+  width:46px;height:46px;border-radius:50%;
+  border:1px solid var(--border);background:var(--card);color:var(--text);
+  font-size:1.15rem;font-weight:900;box-shadow:var(--shadow);
+  opacity:0;pointer-events:none;transform:translateY(8px);
+  transition:opacity .18s,transform .18s;
+}
+#toTop.show{opacity:1;pointer-events:auto;transform:none}
+footer{
+  border-top:1px solid var(--border);padding:1.2rem 1rem 2rem;
+  color:var(--muted);font-size:.8rem;text-align:center;
+}
+/* Créditos */
+.author-name{
+  font-size:clamp(2rem,8vw,4rem);line-height:1.05;font-weight:900;letter-spacing:-.045em;
+  margin:.4rem 0 .2rem;color:var(--text);
+}
+.author-role{font-size:clamp(1rem,2.4vw,1.25rem);font-weight:800;color:var(--accent);margin:0 0 1rem}
+.version-box{
+  display:inline-block;margin-top:.5rem;padding:.5rem .8rem;border-radius:10px;
+  border:1px solid var(--border);background:var(--bg);font-family:var(--mono);font-size:.82rem;
+}
+/* ============================================================
+   4. IMPRESIÓN
+   ============================================================ */
+@page{size:A4 portrait;margin:14mm 12mm}
+@media print{
+  html,body{background:#fff !important;color:#000 !important;font-size:10.5pt !important}
+  .app-header,.toolbar,.tabs,#searchBar,#toTop,.copy-btn,.no-print,#progressWrap{display:none !important}
+  main{max-width:none;padding:0;margin:0}
+  .panel[hidden],body.printing .panel[hidden]{display:block !important}
+  .panel{animation:none !important;margin:0 0 10mm}
+  .card,.callout,.step,details.fold,.table-wrap,pre,.svg-mount{break-inside:avoid}
+  h2,h3,h4{break-after:avoid}
+  .card,.callout,.step,details.fold,.table-wrap{background:#fff !important;border:1px solid #999 !important;box-shadow:none !important}
+  .callout{border-left:4px solid #555 !important}
+  .tag{border:1px solid #555 !important;color:#000 !important;background:#eee !important}
+  th{background:#eee !important;color:#000 !important}
+  td,th{border-color:#999 !important}
+  a{color:#000 !important;text-decoration:underline}
+  pre{background:#f4f4f4 !important;color:#000 !important;border:1px solid #999 !important;white-space:pre-wrap;overflow:visible}
+  code{background:#eee !important;color:#000 !important}
+  .copyblock ul.copy-content,.copyblock ol.copy-content{background:#f4f4f4 !important;color:#000 !important;border:1px solid #999 !important}
+  .svg-mount{background:#fff !important;border:1px solid #999 !important;min-height:0}
+  .svg-mount svg{max-height:85mm}
+  .hero h1,.hero h2{font-size:24pt !important}
+  .author-name{font-size:32pt !important;color:#000 !important}
+  .author-role{color:#000 !important}
+  details.fold summary::after{display:none}
+  details.fold .fold-body{border-top:1px solid #999}
+}
+/* ============================================================
+   5. RESPONSIVE
+   ============================================================ */
+@media (max-width:640px){
+  .app-header{padding:.75rem .7rem .25rem}
+  main{padding:.75rem .7rem 3rem}
+  .toolbar{width:100%;justify-content:flex-start}
+  .btn{flex:1 1 auto;min-width:calc(33.333% - .4rem);font-size:.76rem;padding:.42rem .5rem}
+  .brand{flex-basis:100%}
+  .tabs{margin-top:.5rem;padding:.4rem .05rem}
+  .tab{font-size:.68rem;padding:.5rem .6rem}
+  .step{padding:1rem 1rem 1rem 1rem}
+  .step-num{position:static;margin:0 0 .5rem}
+  .kv{grid-template-columns:1fr;gap:.1rem}
+  .kv dd{margin:0 0 .5rem}
+  .table-wrap{border-radius:10px}
+  table{font-size:.8rem}
+  th,td{padding:.5rem .55rem}
+  .copyblock pre,.copyblock ul.copy-content,.copyblock ol.copy-content{padding-top:2.9rem}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Saltar al contenido</a>
+
+<div id="progressWrap" role="progressbar" aria-label="Progreso de lectura" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+  <div id="progressBar"></div>
+</div>
+
+<header class="app-header">
+  <div class="topbar">
+    <div class="brand">
+      <p class="kicker">Tutorial interactivo · V001</p>
+      <h1>Vercel Skills para principiantes</h1>
+      <p>Guía práctica basada en el material de Rubén Sbarsky</p>
+    </div>
+    <div class="toolbar" role="group" aria-label="Controles del tutorial">
+      <button class="btn" id="searchToggle" type="button" aria-expanded="false" aria-controls="searchBar">Buscar</button>
+      <button class="btn" id="fontMinus" type="button" aria-label="Reducir tamaño de letra">A−</button>
+      <button class="btn" id="fontPlus" type="button" aria-label="Aumentar tamaño de letra">A+</button>
+      <button class="btn" id="themeToggle" type="button" aria-pressed="false">Tema claro</button>
+      <button class="btn btn-accent" id="printBtn" type="button">Imprimir / PDF</button>
+    </div>
+  </div>
+
+  <div class="searchbar" id="searchBar" hidden>
+    <label for="searchInput">Buscar dentro del tutorial</label>
+    <div class="search-row">
+      <input id="searchInput" type="search" placeholder="Ejemplo: instalar, agente, SKILL.md, seguridad…" autocomplete="off" spellcheck="false">
+      <button class="btn" id="searchClose" type="button">Cerrar</button>
+    </div>
+    <div id="searchResults" role="region" aria-label="Resultados de búsqueda"></div>
+  </div>
+
+  <nav class="tabs" role="tablist" aria-label="Secciones del tutorial">
+    <button class="tab" id="tab-inicio" role="tab" aria-selected="true" aria-controls="panel-inicio" tabindex="0" data-tab="inicio">INICIO</button>
+    <button class="tab" id="tab-conceptos" role="tab" aria-selected="false" aria-controls="panel-conceptos" tabindex="-1" data-tab="conceptos">CONCEPTOS</button>
+    <button class="tab" id="tab-procedimiento" role="tab" aria-selected="false" aria-controls="panel-procedimiento" tabindex="-1" data-tab="procedimiento">PROCEDIMIENTO</button>
+    <button class="tab" id="tab-practica" role="tab" aria-selected="false" aria-controls="panel-practica" tabindex="-1" data-tab="practica">PRÁCTICA</button>
+    <button class="tab" id="tab-errores" role="tab" aria-selected="false" aria-controls="panel-errores" tabindex="-1" data-tab="errores">ERRORES</button>
+    <button class="tab" id="tab-resumen" role="tab" aria-selected="false" aria-controls="panel-resumen" tabindex="-1" data-tab="resumen">RESUMEN</button>
+    <button class="tab" id="tab-fuentes" role="tab" aria-selected="false" aria-controls="panel-fuentes" tabindex="-1" data-tab="fuentes">FUENTES</button>
+    <button class="tab" id="tab-creditos" role="tab" aria-selected="false" aria-controls="panel-creditos" tabindex="-1" data-tab="creditos">CRÉDITOS</button>
+  </nav>
+</header>
+
+<main id="main">
+
+<!-- ============================================================
+     INICIO
+     ============================================================ -->
+<section class="panel" id="panel-inicio" role="tabpanel" aria-labelledby="tab-inicio">
+  <div class="hero">
+    <p class="eyebrow">Nivel principiante · Sin programar · Con verificación</p>
+    <h1>Vercel Skills, explicado desde cero</h1>
+    <p class="lead">Aprende qué son las Skills para agentes de IA, cómo instalarlas, cómo crear las tuyas y cómo evitar los errores más comunes. Todo con pasos concretos, ejemplos y advertencias de verificación.</p>
+    <div class="svg-mount" id="svgHome" role="img" aria-label="Ilustración animada: una persona pide una tarea a un agente de inteligencia artificial; el agente consulta una carpeta con un archivo SKILL.md y aplica sus instrucciones. La CLI instala la habilidad y el agente la usa cuando es relevante."></div>
+    <p class="svg-caption">La CLI instala la Skill; el agente la lee y la aplica cuando detecta que es relevante.</p>
+  </div>
+
+  <div class="callout warn">
+    <p><strong>Antes de copiar un comando: verifica.</strong> Este tutorial se basa en una guía que marca expresamente los puntos que deben comprobarse. Los nombres exactos de subcomandos, flags, identificadores de agentes y rutas de instalación <strong>pueden cambiar entre versiones</strong>. La fuente de verdad es <code>npx skills --help</code> y el README oficial del proyecto. Cada vez que veas <span class="tag tag-warn">VERIFICAR</span>, significa: compruébalo tú antes de usarlo en un entorno real.</p>
+  </div>
+
+  <h2>Qué vas a aprender</h2>
+  <div class="grid grid-3">
+    <div class="card">
+      <h3>1. Entender el ecosistema</h3>
+      <p>Qué es una Skill, qué es un agente, qué hace la CLI y qué papel juegan GitHub, npm y el catálogo skills.sh.</p>
+    </div>
+    <div class="card">
+      <h3>2. Preparar el equipo</h3>
+      <p>Comprobar Node.js, npm y Git; abrir una terminal y saber en qué carpeta estás trabajando.</p>
+    </div>
+    <div class="card">
+      <h3>3. Instalar Skills</h3>
+      <p>Descubrir, inspeccionar e instalar una Skill en el agente correcto, a nivel de proyecto o de usuario.</p>
+    </div>
+    <div class="card">
+      <h3>4. Crear tus propias Skills</h3>
+      <p>Escribir un archivo <code>SKILL.md</code> claro, con procedimiento, ejemplos y criterios de calidad.</p>
+    </div>
+    <div class="card">
+      <h3>5. Mantener y compartir</h3>
+      <p>Actualizar, eliminar, organizar una biblioteca personal y publicar Skills en GitHub.</p>
+    </div>
+    <div class="card">
+      <h3>6. Trabajar con seguridad</h3>
+      <p>Detectar instrucciones peligrosas, revisar procedencias y responder ante una Skill sospechosa.</p>
+    </div>
+  </div>
+
+  <h2>Para quién es este tutorial</h2>
+  <div class="grid grid-2">
+    <div class="card">
+      <h3>Sí es para ti si…</h3>
+      <ul>
+        <li>Usas o quieres usar asistentes de IA para programar, escribir o automatizar tareas.</li>
+        <li>Has oído hablar de “Skills”, “agentes” o “SKILL.md” y no sabes por dónde empezar.</li>
+        <li>Quieres que un agente siga siempre el mismo procedimiento sin repetírselo en cada conversación.</li>
+        <li>Prefieres instrucciones paso a paso, con resultados esperados y solución de problemas.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Qué necesitas</h3>
+      <ul>
+        <li>Un ordenador con Windows 11, macOS o Linux.</li>
+        <li>Node.js y npm instalados (te enseñamos a comprobarlo).</li>
+        <li>Una terminal y conexión a internet.</li>
+        <li>Un agente de IA compatible con el formato <code>SKILL.md</code>.</li>
+        <li>Git y una cuenta de GitHub solo si vas a publicar o usar repositorios privados.</li>
+      </ul>
+      <p class="small">No necesitas saber programar. Sí necesitas leer con atención y verificar los comandos.</p>
+    </div>
+  </div>
+
+  <h2>Cómo usar este tutorial</h2>
+  <div class="grid grid-2">
+    <div class="card">
+      <h3>Navegación</h3>
+      <p>Usa las pestañas superiores: <strong>INICIO</strong>, <strong>CONCEPTOS</strong>, <strong>PROCEDIMIENTO</strong>, <strong>PRÁCTICA</strong>, <strong>ERRORES</strong>, <strong>RESUMEN</strong>, <strong>FUENTES</strong> y <strong>CRÉDITOS</strong>. Cada pestaña tiene contenido independiente.</p>
+      <p>El buscador localiza texto en todas las secciones y te lleva al punto exacto.</p>
+    </div>
+    <div class="card">
+      <h3>Herramientas</h3>
+      <ul>
+        <li><strong>A− / A+</strong>: cambia el tamaño de la letra.</li>
+        <li><strong>Tema claro / oscuro</strong>: cambia la apariencia.</li>
+        <li><strong>Imprimir / PDF</strong>: prepara todo el contenido para imprimir.</li>
+        <li><strong>COPIAR</strong>: copia comandos, plantillas y enlaces sin añadir texto extra.</li>
+        <li><strong>Listas de comprobación</strong>: guardan tu progreso en el navegador cuando es posible.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>Ruta recomendada</h2>
+  <div class="flow" role="img" aria-label="Ruta de aprendizaje en cuatro etapas: conceptos, preparación, instalación y práctica; después creación, seguridad y mantenimiento.">
+    <span class="flow-node accent">1. Conceptos</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-node">2. Preparar equipo</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-node">3. Instalar una Skill</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-node">4. Usarla con tu agente</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-node">5. Crear la tuya</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-node">6. Seguridad y mantenimiento</span>
+  </div>
+
+  <div class="callout info">
+    <p><strong>Alcance y honestidad.</strong> El material de partida advierte que su autor no ejecutó comandos en una terminal real ni navegó en vivo durante su redacción. Este tutorial conserva esa honestidad: distingue entre lo documentado y estable, lo que sigue el patrón habitual de estas herramientas y lo que debes verificar tú. No se presentan como probados comandos que no hayan podido comprobarse.</p>
+  </div>
+
+  <div class="callout danger">
+    <p><strong>Regla de oro de seguridad.</strong> Una Skill es texto que un agente con capacidad de actuar puede interpretar como instrucciones de confianza. No instales Skills de terceros sin leerlas antes. Si una Skill pide claves, tokens, contraseñas o comandos destructivos, detente y revísala.</p>
+  </div>
+
+  <p class="center small">Cuando termines, serás capaz de explicar qué es una Skill, instalarla en el agente correcto, crear una propia y mantener una biblioteca segura.</p>
+</section>
+
+<!-- ============================================================
+     CONCEPTOS
+     ============================================================ -->
+<section class="panel" id="panel-conceptos" role="tabpanel" aria-labelledby="tab-conceptos" hidden>
+  <p class="eyebrow">Módulos 0, 2 y 7</p>
+  <h2>Conceptos: qué es cada cosa y por qué importa</h2>
+  <p class="lead">Antes de ejecutar comandos, necesitas separar siete elementos que los principiantes suelen confundir: la CLI, el repositorio, la Skill, el archivo <code>SKILL.md</code>, el agente, la carpeta de instalación y las instrucciones que el agente consulta.</p>
+
+  <h3>1. ¿Qué es Vercel Skills?</h3>
+  <p><strong>Vercel Skills</strong> es un proyecto de código abierto mantenido por Vercel Labs. Está compuesto por dos piezas principales:</p>
+  <ol>
+    <li><strong>Una CLI</strong> llamada <code>skills</code>, publicada en npm, que sirve para buscar, instalar, listar, actualizar y eliminar Skills para agentes de IA.</li>
+    <li><strong>Un catálogo público</strong> en <code>https://skills.sh/</code>, donde se pueden explorar Skills de la comunidad y de Vercel, organizadas por categorías, autor y repositorio de origen.</li>
+  </ol>
+  <p>Una analogía útil: es como una <strong>tienda de aplicaciones + gestor de paquetes</strong>, pero para instrucciones que mejoran a un agente de IA, no para programas ejecutables.</p>
+
+  <div class="table-wrap">
+    <table>
+      <caption>Las tres piezas que no debes confundir</caption>
+      <thead>
+        <tr><th>Concepto</th><th>Qué es</th><th>Analogía</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Formato Agent Skills (<code>SKILL.md</code>)</td><td>Una convención de archivo que cualquier agente compatible puede leer.</td><td>El formato PDF: cualquier lector de PDF puede abrirlo.</td></tr>
+        <tr><td>CLI <code>skills</code> de Vercel</td><td>Una herramienta para instalar esos archivos en el sitio correcto de cada agente.</td><td>Un gestor de descargas que coloca el PDF en la carpeta correcta de cada programa.</td></tr>
+        <tr><td>Catálogo <code>skills.sh</code></td><td>Un sitio web para descubrir Skills ya creadas.</td><td>Una tienda o buscador de PDFs disponibles.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>2. ¿Qué es una Skill?</h3>
+  <p>Una <strong>Skill</strong> es una carpeta que contiene, como mínimo, un archivo llamado exactamente <code>SKILL.md</code>. Ese archivo incluye:</p>
+  <ul>
+    <li>Una <strong>cabecera</strong> con metadatos (nombre, descripción, cuándo usarla).</li>
+    <li>Un <strong>cuerpo</strong> en Markdown con instrucciones, procedimientos, ejemplos y reglas.</li>
+  </ul>
+  <p>Una Skill <strong>no es código que se ejecuta automáticamente</strong>. Es texto estructurado que un agente lee y usa como guía, igual que una persona nueva en un trabajo lee un manual de procedimientos antes de actuar.</p>
+
+  <div class="callout info">
+    <p><strong>Idea clave:</strong> una Skill no es un agente. Una Skill es información que un agente consulta. Sin un agente que la lea, es un archivo de texto inerte.</p>
+  </div>
+
+  <h3>3. ¿Qué problema resuelve?</h3>
+  <p>Antes de las Skills, si querías que un agente siguiera siempre el mismo procedimiento detallado, tenías que repetir las instrucciones en cada conversación, copiarlas en cada proyecto o confiar en que el agente “recordara” algo que normalmente no recuerda entre sesiones.</p>
+  <p>Las Skills permiten <strong>empaquetar instrucciones reutilizables</strong> en un formato estándar, instalarlas una vez y dejar que el agente las use cuando detecta que son relevantes.</p>
+
+  <h3>4. Skill vs. prompt vs. plugin vs. herramienta vs. agente</h3>
+  <div class="table-wrap">
+    <table>
+      <caption>Diferencias prácticas</caption>
+      <thead>
+        <tr><th>Elemento</th><th>Qué hace</th><th>Se instala o se escribe</th><th>Permanece entre sesiones</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Prompt</strong></td><td>Un mensaje puntual que escribes tú en una conversación.</td><td>Se escribe cada vez.</td><td>No, salvo que lo guardes.</td></tr>
+        <tr><td><strong>Skill</strong></td><td>Un conjunto reutilizable de instrucciones guardado en un <code>SKILL.md</code>.</td><td>Se instala una vez en una carpeta.</td><td>Sí, mientras el archivo exista.</td></tr>
+        <tr><td><strong>Plugin / extensión</strong></td><td>Añade funciones nuevas al programa, normalmente con código ejecutable.</td><td>Se instala en el programa anfitrión.</td><td>Sí, actúa a nivel de software.</td></tr>
+        <tr><td><strong>Herramienta (tool)</strong></td><td>Una función concreta que el agente puede ejecutar: leer archivos, buscar, ejecutar código.</td><td>La proporciona el agente o un plugin.</td><td>Depende del agente.</td></tr>
+        <tr><td><strong>Agente</strong></td><td>El programa completo que usa un modelo de IA, lee Skills y ejecuta herramientas.</td><td>Se instala como aplicación o CLI.</td><td>Es el anfitrión de todo lo demás.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><strong>Resumen en una frase:</strong> una Skill es como una página de un manual que el agente saca de un archivador cuando la necesita; el agente es la persona que trabaja; las herramientas son sus manos; un plugin amplía sus capacidades físicas; un prompt es una orden verbal puntual.</p>
+
+  <h3>5. La arquitectura en siete elementos</h3>
+  <ol>
+    <li><strong>El programa <code>skills</code></strong>: la CLI que tú ejecutas en la terminal. No es una Skill.</li>
+    <li><strong>El repositorio que contiene Skills</strong>: un proyecto en GitHub donde se publican una o varias carpetas de Skills.</li>
+    <li><strong>Una Skill individual</strong>: una carpeta concreta dedicada a una sola habilidad.</li>
+    <li><strong>El archivo <code>SKILL.md</code></strong>: el archivo principal con la cabecera y las instrucciones.</li>
+    <li><strong>El agente que utiliza la Skill</strong>: el programa de IA que lee el archivo y decide si lo aplica.</li>
+    <li><strong>La carpeta de instalación</strong>: la ubicación del disco donde la CLI copia la Skill para que el agente la encuentre.</li>
+    <li><strong>Las instrucciones que el agente consulta</strong>: el contenido del <code>SKILL.md</code> y de sus archivos auxiliares.</li>
+  </ol>
+
+  <div class="flow" role="img" aria-label="Flujo: repositorio de GitHub, CLI skills, carpeta de instalación del agente, agente de IA y resultado.">
+    <span class="flow-node">Repositorio GitHub</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-node accent">CLI skills</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-node">Carpeta del agente</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-node">Agente de IA</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-node">Resultado</span>
+  </div>
+
+  <h3>6. Anatomía de un archivo <code>SKILL.md</code></h3>
+  <p>El archivo tiene dos partes: una <strong>cabecera YAML</strong> delimitada por tres guiones y un <strong>cuerpo</strong> en Markdown.</p>
+  <div class="table-wrap">
+    <table>
+      <caption>Campos de la cabecera</caption>
+      <thead>
+        <tr><th>Campo</th><th>Obligatorio</th><th>Descripción</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>name</code></td><td>Sí</td><td>Nombre identificativo, corto y descriptivo, normalmente en minúsculas y con guiones.</td></tr>
+        <tr><td><code>description</code></td><td>Sí</td><td>Explica qué hace y cuándo debe activarse. Es el campo más importante: el agente lo usa para decidir si la Skill es relevante.</td></tr>
+        <tr><td><code>license</code></td><td>Opcional</td><td>Licencia de distribución. Su tratamiento exacto depende del agente o la herramienta.</td></tr>
+        <tr><td>Otros campos</td><td>Opcional</td><td>Algunos agentes admiten campos propios. Verifica siempre en la documentación de tu agente antes de asumir que tendrán efecto.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h4>Ejemplo completo y funcional</h4>
+  <div class="copyblock">
+    <pre class="copy-content">---
+name: resumen-de-reuniones
+description: Genera un resumen estructurado de las notas de una reunión, identificando decisiones tomadas, tareas asignadas y responsables. Úsala cuando el usuario pida "resume esta reunión", "saca las tareas de esta transcripción" o pegue notas de una reunión.
+---
+
+# Resumen de reuniones
+
+## Cuándo usar esta skill
+
+Usa esta skill cuando el usuario:
+- Pegue una transcripción o notas de una reunión y pida un resumen.
+- Pida explícitamente extraer tareas, decisiones o responsables de un texto de reunión.
+
+## Procedimiento
+
+1. Lee el texto completo proporcionado por el usuario.
+2. Identifica y separa tres bloques:
+   - Decisiones tomadas.
+   - Tareas asignadas (con responsable, si se menciona).
+   - Temas pendientes de resolver.
+3. Redacta el resumen usando el siguiente formato:
+
+   ## Resumen de la reunión
+   ### Decisiones
+   - ...
+   ### Tareas
+   - [Responsable] Tarea...
+   ### Pendientes
+   - ...
+
+4. Si no se menciona un responsable para una tarea, indica "(sin asignar)".
+5. No inventes decisiones ni tareas que no estén explícitas o claramente implícitas en el texto original.
+
+## Criterios de calidad
+
+- El resumen no debe superar el 25% de la longitud del texto original.
+- Cada tarea debe tener un verbo de acción claro.
+- No se debe omitir ninguna decisión explícita del texto original.
+
+## Ejemplo
+
+**Entrada (fragmento):**
+"Quedamos en que María se encarga del informe para el viernes. Todavía no decidimos el presupuesto final."
+
+**Salida esperada:**
+## Resumen de la reunión
+### Decisiones
+- (ninguna decisión final registrada sobre presupuesto)
+### Tareas
+- [María] Entregar el informe antes del viernes.
+### Pendientes
+- Definir el presupuesto final.</pre>
+  </div>
+
+  <details class="fold">
+    <summary>Por qué este ejemplo funciona bien</summary>
+    <div class="fold-body">
+      <ul>
+        <li><strong>Descripción con frases disparadoras:</strong> incluye expresiones que un usuario real escribiría.</li>
+        <li><strong>Procedimiento numerado:</strong> el agente sabe qué hacer y en qué orden.</li>
+        <li><strong>Criterios verificables:</strong> “no superar el 25%” es comprobable; “que quede bien” no lo es.</li>
+        <li><strong>Manejo de datos faltantes:</strong> indica “(sin asignar)” en lugar de inventar responsables.</li>
+        <li><strong>Ejemplo de entrada y salida:</strong> reduce la ambigüedad sobre el formato esperado.</li>
+      </ul>
+    </div>
+  </details>
+
+  <h3>7. Cómo decide el agente activar una Skill</h3>
+  <p>De forma general, el agente escanea las carpetas donde pueden existir Skills instaladas, lee las cabeceras (<code>name</code> y <code>description</code>) para construir un índice ligero y, cuando planteas una tarea, compara esa tarea con las descripciones. Si decide que una Skill es relevante, carga su contenido completo y lo usa como guía.</p>
+  <p>El comportamiento exacto depende de cada agente. Algunos pueden permitir invocarla explícitamente por nombre; otros dependen solo de la detección automática. Verifica la documentación de tu agente.</p>
+
+  <h3>8. Instalación de proyecto vs. instalación global</h3>
+  <div class="table-wrap">
+    <table>
+      <caption>Dos alcances distintos</caption>
+      <thead>
+        <tr><th>Tipo</th><th>Dónde queda</th><th>Quién puede usarla</th><th>Cuándo conviene</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>De proyecto</strong></td><td>Dentro de la carpeta del proyecto actual.</td><td>Solo el agente que trabaja en ese proyecto.</td><td>Convenciones específicas de un proyecto, cliente o equipo.</td></tr>
+        <tr><td><strong>Global de usuario</strong></td><td>En una carpeta de configuración de tu usuario, fuera del proyecto.</td><td>El agente, en cualquier proyecto que abras con tu usuario.</td><td>Habilidades generales que quieres tener siempre disponibles.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>9. Qué puede y qué no puede hacer una Skill</h3>
+  <div class="grid grid-2">
+    <div class="card">
+      <h3>Puede</h3>
+      <ul>
+        <li>Guiar al agente con procedimientos detallados.</li>
+        <li>Aportar ejemplos, plantillas y listas de comprobación.</li>
+        <li>Referenciar archivos auxiliares.</li>
+        <li>Indicar qué herramientas usar y en qué orden, si el agente las tiene.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>No puede por sí sola</h3>
+      <ul>
+        <li>Ejecutar código de forma autónoma: quien actúa es el agente y sus herramientas.</li>
+        <li>Garantizar que el agente la siga al pie de la letra.</li>
+        <li>Funcionar sin un agente compatible que la cargue.</li>
+        <li>Sustituir la supervisión humana en tareas sensibles.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>10. Resumen del módulo</h3>
+  <ul>
+    <li>La CLI instala; el catálogo descubre; el repositorio contiene; el agente aplica.</li>
+    <li>Una Skill es una carpeta con un <code>SKILL.md</code>.</li>
+    <li>La <code>description</code> es la puerta de entrada: decide si la Skill se activa.</li>
+    <li>Instalar la CLI no instala ninguna Skill.</li>
+    <li>Instalar una Skill no garantiza que el agente la use si no es relevante o si está en la carpeta equivocada.</li>
+  </ul>
+</section>
+
+<!-- ============================================================
+     PROCEDIMIENTO
+     ============================================================ -->
+<section class="panel" id="panel-procedimiento" role="tabpanel" aria-labelledby="tab-procedimiento" hidden>
+  <p class="eyebrow">Módulos 1, 3, 4, 5, 6, 10, 11 y 12</p>
+  <h2>Procedimiento: de cero a una Skill instalada</h2>
+  <p class="lead">Esta es la parte práctica. Sigue los pasos en orden. Cada paso incluye objetivo, explicación, comandos, resultado esperado y problemas probables.</p>
+
+  <div class="callout warn">
+    <p><strong>Protocolo obligatorio antes de ejecutar.</strong> Los comandos de esta sección siguen el patrón documentado y habitual de este tipo de CLIs, pero los nombres exactos pueden variar. Antes de usar nada en producción, ejecuta <code>npx skills --help</code> y consulta el README oficial. Donde no se puede garantizar la sintaxis, verás <span class="tag tag-warn">VERIFICAR</span>.</p>
+  </div>
+
+  <div class="step">
+    <div class="step-num">0</div>
+    <h3>Verificar la CLI y la documentación</h3>
+    <p class="goal">Objetivo: conocer los comandos reales de tu versión antes de confiar en cualquier tutorial.</p>
+    <p>La ayuda integrada refleja exactamente la versión que se está ejecutando en tu ordenador. Es más fiable que cualquier guía, incluida esta.</p>
+    <div class="copyblock">
+      <pre class="copy-content">npx skills --help
+npx skills add --help</pre>
+    </div>
+    <p><strong>Resultado esperado:</strong> una lista de subcomandos y opciones. Si <code>add --help</code> no existe, prueba con el subcomando que aparezca en la ayuda general.</p>
+    <p><strong>Problema probable:</strong> si no aparece nada, revisa Node.js y tu conexión (paso 1).</p>
+  </div>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <h3>Comprobar requisitos: Node.js, npm y Git</h3>
+    <p class="goal">Objetivo: asegurarte de que la CLI puede ejecutarse.</p>
+    <p>La CLI está publicada en npm y necesita Node.js. Git es opcional para instalar Skills existentes, pero recomendable para clonar repositorios o publicar los tuyos.</p>
+    <div class="copyblock">
+      <pre class="copy-content">node -v
+npm -v
+git --version</pre>
+    </div>
+    <p><strong>Resultado esperado:</strong> números de versión, por ejemplo <code>v20.11.0</code> y <code>10.2.4</code>. En Git, algo como <code>git version 2.x</code>.</p>
+    <p><strong>Si falla:</strong> instala Node.js desde <a href="https://nodejs.org/" target="_blank" rel="noopener noreferrer">nodejs.org</a>, elige la versión LTS, acepta las opciones por defecto, cierra y vuelve a abrir la terminal. Git se instala desde <a href="https://git-scm.com/" target="_blank" rel="noopener noreferrer">git-scm.com</a>.</p>
+    <div class="callout info">
+      <p>En Windows, si acabas de instalar Node.js y la terminal sigue sin reconocerlo, reinicia la terminal y, si persiste, cierra sesión y vuelve a entrar.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <h3>Abrir una terminal y saber dónde estás</h3>
+    <p class="goal">Objetivo: ejecutar comandos en la carpeta correcta.</p>
+    <ul>
+      <li><strong>Windows 11:</strong> tecla Windows → escribe <code>PowerShell</code> → abre “Windows PowerShell” o “Terminal”.</li>
+      <li><strong>macOS:</strong> abre “Terminal” desde Aplicaciones o Spotlight.</li>
+      <li><strong>Linux:</strong> abre la terminal de tu distribución.</li>
+    </ul>
+    <div class="copyblock">
+      <pre class="copy-content">pwd
+ls</pre>
+    </div>
+    <p class="small">En Windows, <code>pwd</code> y <code>ls</code> funcionan en PowerShell. En CMD clásico se usan <code>cd</code> y <code>dir</code>.</p>
+    <p>Para entrar en la carpeta de tu proyecto:</p>
+    <div class="copyblock">
+      <pre class="copy-content">cd ruta/a/tu/proyecto</pre>
+    </div>
+    <p><strong>Resultado esperado:</strong> la terminal muestra la ruta de tu proyecto. Todo lo que instales a nivel de proyecto quedará dentro de esa carpeta.</p>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <h3>Ejecutar la CLI con npx</h3>
+    <p class="goal">Objetivo: lanzar la herramienta sin instalarla permanentemente.</p>
+    <p><code>npx</code> busca el paquete <code>skills</code> en npm, lo descarga temporalmente o usa una copia en caché y lo ejecuta. Es el método recomendado para empezar.</p>
+    <div class="copyblock">
+      <pre class="copy-content">npx skills
+npx skills --help
+npx skills --version</pre>
+    </div>
+    <p><strong>Resultado esperado:</strong> un menú interactivo, un mensaje de ayuda o un número de versión. La primera vez, npm puede preguntar si deseas instalar el paquete temporalmente: confirma con “y”.</p>
+    <p><span class="tag tag-warn">VERIFICAR</span> que <code>--version</code> existe en tu versión. Si no, usa <code>--help</code>.</p>
+    <details class="fold">
+      <summary>¿npx o instalación global?</summary>
+      <div class="fold-body">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Método</th><th>Comando típico</th><th>Ventaja</th><th>Desventaja</th></tr></thead>
+            <tbody>
+              <tr><td>npx (recomendado para empezar)</td><td><code>npx skills ...</code></td><td>Usa una versión publicada reciente y no ensucia el sistema.</td><td>Puede tardar un segundo más si no está en caché.</td></tr>
+              <tr><td>Instalación global</td><td><code>npm install -g skills</code></td><td>El comando <code>skills</code> queda disponible directamente.</td><td>Debes actualizarlo tú y puede quedar desactualizado.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Si instalas globalmente, verifica que el binario expuesto se llama exactamente <code>skills</code>. <span class="tag tag-warn">VERIFICAR</span></p>
+      </div>
+    </details>
+    <p><strong>Problemas frecuentes:</strong> “npx no se reconoce” indica que Node.js/npm no están bien instalados. Si el comando se queda colgado, revisa la conexión y el registro de npm con <code>npm config get registry</code>.</p>
+  </div>
+
+  <div class="step">
+    <div class="step-num">4</div>
+    <h3>Descubrir Skills antes de instalar</h3>
+    <p class="goal">Objetivo: encontrar candidatas y evaluarlas críticamente.</p>
+    <ol>
+      <li>Abre <a href="https://skills.sh/" target="_blank" rel="noopener noreferrer">skills.sh</a>.</li>
+      <li>Usa el buscador o los filtros por categoría.</li>
+      <li>Haz clic en una Skill para ver su descripción, repositorio de origen y, si está disponible, el comando de instalación sugerido.</li>
+      <li>Anota el origen, normalmente algo como <code>owner/repositorio</code> o una URL de GitHub.</li>
+    </ol>
+    <p>También puedes explorar un repositorio directamente en GitHub y buscar archivos <code>SKILL.md</code> en sus carpetas.</p>
+    <div class="copyblock">
+      <pre class="copy-content">npx skills search "revisión de código"</pre>
+    </div>
+    <p><span class="tag tag-warn">VERIFICAR</span> la existencia y sintaxis exacta del subcomando <code>search</code>. Si no existe, el menú interactivo de <code>npx skills</code> puede incluir una opción de búsqueda o exploración.</p>
+    <h4>Qué comprobar antes de instalar</h4>
+    <ul>
+      <li>¿La <code>description</code> coincide claramente con la tarea que quieres resolver?</li>
+      <li>¿El procedimiento es compatible con tu proyecto y tu lenguaje?</li>
+      <li>¿Depende de herramientas que tu agente no tiene?</li>
+      <li>¿El repositorio parece mantenido y el autor es identificable?</li>
+      <li>¿Has leído el contenido completo, no solo el título?</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <div class="step-num">5</div>
+    <h3>Instalar una Skill</h3>
+    <p class="goal">Objetivo: copiar la Skill a la carpeta correcta de tu agente.</p>
+    <p>El patrón general documentado es:</p>
+    <div class="copyblock">
+      <pre class="copy-content">npx skills add &lt;origen&gt; [opciones]</pre>
+    </div>
+    <p><strong>Resultado esperado:</strong> un mensaje de confirmación y una nueva carpeta con el <code>SKILL.md</code> en la ruta correspondiente al agente elegido.</p>
+
+    <details class="fold">
+      <summary>Escenario A — Instalar desde un repositorio completo de GitHub</summary>
+      <div class="fold-body">
+        <div class="copyblock">
+          <pre class="copy-content">npx skills add owner/repositorio</pre>
+        </div>
+        <p>Si el repositorio contiene varias Skills, la CLI puede abrir un modo interactivo para que elijas. Usa las flechas y la barra espaciadora o Enter para seleccionar.</p>
+      </div>
+    </details>
+
+    <details class="fold">
+      <summary>Escenario B — Instalar desde una URL completa</summary>
+      <div class="fold-body">
+        <div class="copyblock">
+          <pre class="copy-content">npx skills add https://github.com/owner/repositorio</pre>
+        </div>
+        <p>Equivale al anterior, usando la URL que copiaste del navegador.</p>
+      </div>
+    </details>
+
+    <details class="fold">
+      <summary>Escenario C — Instalar una Skill concreta dentro de un repositorio</summary>
+      <div class="fold-body">
+        <div class="copyblock">
+          <pre class="copy-content">npx skills add owner/repositorio/ruta/a/la/skill</pre>
+        </div>
+        <p>Evita el menú interactivo si el repositorio contiene varias Skills. <span class="tag tag-warn">VERIFICAR</span> si la subruta se indica con <code>/</code> o con un flag como <code>--path</code>.</p>
+      </div>
+    </details>
+
+    <details class="fold">
+      <summary>Escenario D — Instalar desde una ruta local</summary>
+      <div class="fold-body">
+        <div class="copyblock">
+          <pre class="copy-content">npx skills add ./mi-skill-local
+npx skills add /ruta/completa/a/mi-skill-local</pre>
+        </div>
+        <p>Útil para probar una Skill propia antes de publicarla.</p>
+      </div>
+    </details>
+
+    <details class="fold">
+      <summary>Escenario E — Elegir agente y alcance</summary>
+      <div class="fold-body">
+        <div class="copyblock">
+          <pre class="copy-content">npx skills add owner/repositorio --agent &lt;tu-agente&gt;
+npx skills add owner/repositorio --global
+npx skills add owner/repositorio --agent &lt;tu-agente&gt; --global</pre>
+        </div>
+        <p><span class="tag tag-warn">VERIFICAR</span> los nombres exactos de los flags. <code>--agent</code> y <code>--global</code> son el patrón habitual, pero deben confirmarse con <code>--help</code>.</p>
+        <p><strong>De proyecto:</strong> ejecuta el comando dentro de la carpeta del proyecto. <strong>Global:</strong> usa el flag correspondiente o consulta la documentación.</p>
+      </div>
+    </details>
+
+    <details class="fold">
+      <summary>Escenario F — Varias Skills y modo no interactivo</summary>
+      <div class="fold-body">
+        <div class="copyblock">
+          <pre class="copy-content">npx skills add owner/repositorio --skill nombre-skill-1 --skill nombre-skill-2
+npx skills add owner/repositorio --all
+npx skills add owner/repositorio --yes</pre>
+        </div>
+        <p><span class="tag tag-warn">VERIFICAR</span> la existencia y sintaxis de <code>--skill</code>, <code>--all</code> y <code>--yes</code>. El modo no interactivo es útil para scripts reproducibles, pero debe usarse solo cuando sepas exactamente qué se instala.</p>
+      </div>
+    </details>
+
+    <h4>Verificación tras instalar</h4>
+    <ol>
+      <li>Localiza la carpeta de instalación de tu agente (ver paso 6).</li>
+      <li>Comprueba que existe una subcarpeta con el nombre de la Skill.</li>
+      <li>Abre el <code>SKILL.md</code> y confirma que el contenido es el esperado.</li>
+      <li>Si tu CLI lo permite, lista las Skills instaladas:</li>
+    </ol>
+    <div class="copyblock">
+      <pre class="copy-content">npx skills list</pre>
+    </div>
+    <p><span class="tag tag-warn">VERIFICAR</span> el nombre exacto del subcomando de listado.</p>
+  </div>
+
+  <div class="step">
+    <div class="step-num">6</div>
+    <h3>Elegir el agente correcto y comprobar que detecta la Skill</h3>
+    <p class="goal">Objetivo: evitar el error más común: instalar en la carpeta de otro agente.</p>
+    <p>Antes de instalar, identifica:</p>
+    <ol>
+      <li>Qué agente usas de verdad.</li>
+      <li>Si ese agente soporta el formato <code>SKILL.md</code>.</li>
+      <li>Qué identificador usa la CLI para referirse a él.</li>
+      <li>En qué carpeta espera encontrar sus Skills.</li>
+    </ol>
+    <div class="table-wrap">
+      <table>
+        <caption>Agentes habitualmente asociados al formato Agent Skills. Los identificadores y rutas exactas deben confirmarse en la documentación vigente.</caption>
+        <thead>
+          <tr><th>Agente</th><th>Identificador probable</th><th>Ruta habitual</th><th>Notas</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Claude Code (Anthropic)</td><td><code>claude</code> <span class="tag tag-warn">VERIFICAR</span></td><td><code>.claude/skills/&lt;nombre&gt;/SKILL.md</code> <span class="tag tag-warn">VERIFICAR</span></td><td>Agente de referencia del formato Agent Skills.</td></tr>
+          <tr><td>Cursor</td><td><code>cursor</code> <span class="tag tag-warn">VERIFICAR</span></td><td>Configuración propia del proyecto <span class="tag tag-warn">VERIFICAR</span></td><td>Puede priorizar su sistema de “Rules”. Confirmar en su documentación.</td></tr>
+          <tr><td>Codex CLI (OpenAI)</td><td><code>codex</code> <span class="tag tag-warn">VERIFICAR</span></td><td>Configuración propia <span class="tag tag-warn">VERIFICAR</span></td><td>Herramienta en evolución activa.</td></tr>
+          <tr><td>Windsurf</td><td><code>windsurf</code> <span class="tag tag-warn">VERIFICAR</span></td><td>Configuración propia <span class="tag tag-warn">VERIFICAR</span></td><td>Confirmar soporte exacto.</td></tr>
+          <tr><td>GitHub Copilot (modo agente)</td><td><code>copilot</code> <span class="tag tag-warn">VERIFICAR</span></td><td>Configuración propia <span class="tag tag-warn">VERIFICAR</span></td><td>Puede depender del editor.</td></tr>
+          <tr><td>opencode y otros agentes de terminal</td><td>Identificador propio <span class="tag tag-warn">VERIFICAR</span></td><td>Configuración propia <span class="tag tag-warn">VERIFICAR</span></td><td>El soporte puede cambiar rápidamente.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h4>Cómo verificar que el agente la detecta</h4>
+    <ol>
+      <li>Abre una conversación nueva, para que recargue la configuración.</li>
+      <li>Pregunta al agente qué Skills tiene disponibles, si tu agente permite esa consulta.</li>
+      <li>Haz una petición que coincida exactamente con la <code>description</code> de la Skill.</li>
+      <li>Observa si el resultado sigue la estructura o los criterios de la Skill.</li>
+    </ol>
+    <p><strong>Si no la detecta:</strong> confirma la ruta, comprueba que la Skill está instalada para ese agente, reinicia la aplicación y valida la cabecera YAML. Si sigue igual, revisa la sección ERRORES.</p>
+  </div>
+
+  <div class="step">
+    <div class="step-num">7</div>
+    <h3>Consultar comandos y opciones avanzadas</h3>
+    <p class="goal">Objetivo: tener una referencia rápida, siempre sujeta a verificación.</p>
+    <div class="table-wrap">
+      <table>
+        <caption>Patrón habitual de comandos. Confirma cada uno con <code>--help</code>.</caption>
+        <thead><tr><th>Acción</th><th>Comando patrón</th></tr></thead>
+        <tbody>
+          <tr><td>Ver ayuda</td><td><code>npx skills --help</code></td></tr>
+          <tr><td>Instalar</td><td><code>npx skills add &lt;origen&gt;</code></td></tr>
+          <tr><td>Listar instaladas</td><td><code>npx skills list</code></td></tr>
+          <tr><td>Buscar en el catálogo</td><td><code>npx skills search "&lt;término&gt;"</code> <span class="tag tag-warn">VERIFICAR</span></td></tr>
+          <tr><td>Actualizar</td><td><code>npx skills update [nombre]</code> <span class="tag tag-warn">VERIFICAR</span></td></tr>
+          <tr><td>Eliminar</td><td><code>npx skills remove &lt;nombre&gt;</code> <span class="tag tag-warn">VERIFICAR</span></td></tr>
+          <tr><td>Crear plantilla</td><td><code>npx skills init</code> <span class="tag tag-warn">VERIFICAR</span></td></tr>
+          <tr><td>Instalar global</td><td><code>npx skills add &lt;origen&gt; --global</code> <span class="tag tag-warn">VERIFICAR</span></td></tr>
+          <tr><td>Instalar para un agente</td><td><code>npx skills add &lt;origen&gt; --agent &lt;nombre&gt;</code> <span class="tag tag-warn">VERIFICAR</span></td></tr>
+          <tr><td>Modo no interactivo</td><td><code>npx skills add &lt;origen&gt; --yes</code> <span class="tag tag-warn">VERIFICAR</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Si un subcomando no existe en tu versión, no lo fuerces: usa la ayuda integrada y el README oficial.</p>
+  </div>
+
+  <div class="step">
+    <div class="step-num">8</div>
+    <h3>Actualizar, mantener y eliminar Skills</h3>
+    <p class="goal">Objetivo: evitar que tu colección se vuelva obsoleta o insegura.</p>
+    <ol>
+      <li>Lista las Skills instaladas y anota su procedencia.</li>
+      <li>Antes de actualizar una Skill crítica, revisa el historial de cambios del repositorio de origen.</li>
+      <li>Prueba la actualización primero en un proyecto no crítico.</li>
+      <li>Ejecuta la actualización:</li>
+    </ol>
+    <div class="copyblock">
+      <pre class="copy-content">npx skills update &lt;nombre-skill&gt;
+npx skills update --all</pre>
+    </div>
+    <p><span class="tag tag-warn">VERIFICAR</span> si existe <code>outdated</code> o <code>--all</code>. Si no, actualiza una por una.</p>
+    <ol start="5">
+      <li>Verifica el comportamiento con una tarea representativa.</li>
+      <li>Elimina las Skills que ya no uses:</li>
+    </ol>
+    <div class="copyblock">
+      <pre class="copy-content">npx skills remove &lt;nombre-skill&gt;</pre>
+    </div>
+    <p><strong>Precaución:</strong> no automatices actualizaciones desatendidas en proyectos críticos. Una actualización puede cambiar el comportamiento del agente sin que lo hayas revisado.</p>
+  </div>
+
+  <h3>Cómo usa el agente una Skill instalada</h3>
+  <p>El agente suele escanear las carpetas de Skills, leer las cabeceras y construir un índice ligero. Cuando tu tarea coincide con una <code>description</code>, carga el contenido completo y lo aplica. Si el agente ignora una Skill, revisa la ruta, la descripción, la formulación de tu petición y si hay demasiadas Skills compitiendo.</p>
+  <div class="callout info">
+    <p>No todos los agentes activan, interpretan o priorizan las Skills de la misma manera. Las reglas generales describen el comportamiento típico del ecosistema; el comportamiento exacto de tu agente debe confirmarse en su documentación oficial.</p>
+  </div>
+</section>
+
+<!-- ============================================================
+     PRÁCTICA
+     ============================================================ -->
+<section class="panel" id="panel-practica" role="tabpanel" aria-labelledby="tab-practica" hidden>
+  <p class="eyebrow">Módulos 8, 9, 15, 16, 17 y 18</p>
+  <h2>Práctica: proyectos guiados y creación de Skills</h2>
+  <p class="lead">La teoría no basta. Estos proyectos te llevan desde instalar una Skill existente hasta publicar una biblioteca propia y diseñar una política de uso profesional.</p>
+
+  <h3>Cómo escribir instrucciones que funcionan</h3>
+  <div class="grid grid-2">
+    <div class="card">
+      <h3>Mal ejemplo</h3>
+      <pre><code>description: Ayuda con textos.</code></pre>
+      <p><strong>Problema:</strong> no dice dominio, acción, tono ni cuándo usarla. El agente no sabe cuándo activarla.</p>
+    </div>
+    <div class="card">
+      <h3>Buen ejemplo</h3>
+      <pre><code>description: Revisa textos en español para publicaciones de blog, corrigiendo ortografía, gramática y adecuando el tono a un estilo profesional pero cercano. Úsala cuando el usuario pida "revisa este texto", "corrige este artículo" o pegue un borrador de blog.</code></pre>
+      <p><strong>Por qué mejora:</strong> incluye dominio, acción, tono y frases disparadoras literales.</p>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <caption>De instrucción ambigua a instrucción verificable</caption>
+      <thead><tr><th>Deficiente</th><th>Problema</th><th>Mejorada</th></tr></thead>
+      <tbody>
+        <tr><td>“Resume el texto de forma adecuada.”</td><td>“Adecuada” no está definido.</td><td>“Resume en un máximo de 120 palabras, conservando cifras, fechas y nombres propios. No añadas opiniones ni información que no esté en el original.”</td></tr>
+        <tr><td>“Hazlo bien.”</td><td>No es comprobable.</td><td>“Incluye al menos un ejemplo y no superes las 150 palabras.”</td></tr>
+        <tr><td>“Sé breve pero incluye todos los detalles.”</td><td>Contradicción.</td><td>“Incluye solo los detalles necesarios para tomar una decisión; máximo 5 viñetas.”</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Proyecto 1 — Instalar y utilizar una Skill existente</h3>
+  <div class="card">
+    <p><strong>Objetivo:</strong> completar tu primer ciclo real de instalación y uso.</p>
+    <p><strong>Nivel:</strong> principiante.</p>
+    <ol>
+      <li>Crea una carpeta de práctica:
+        <div class="copyblock"><pre class="copy-content">mkdir practica-skills
+cd practica-skills</pre></div>
+      </li>
+      <li>Busca en <code>skills.sh</code> una Skill real que te resulte útil.</li>
+      <li>Anota su origen y revisa su <code>SKILL.md</code> en GitHub.</li>
+      <li>Instálala para tu agente:
+        <div class="copyblock"><pre class="copy-content">npx skills add owner/repositorio --agent &lt;tu-agente&gt;</pre></div>
+      </li>
+      <li>Verifica que el archivo está en la carpeta correcta.</li>
+      <li>Abre una conversación nueva con tu agente y pide una tarea que coincida con la <code>description</code>.</li>
+      <li>Observa si aplica el procedimiento.</li>
+    </ol>
+    <p><strong>Resultado esperado:</strong> el agente responde siguiendo la estructura o los criterios de la Skill.</p>
+    <div class="callout warn"><p>Si el agente no la usa, revisa la ruta, el agente de destino y la formulación de tu petición antes de concluir que la Skill está rota.</p></div>
+  </div>
+
+  <h3>Proyecto 2 — Evaluar tres Skills candidatas</h3>
+  <div class="card">
+    <p><strong>Objetivo:</strong> practicar la evaluación crítica antes de instalar.</p>
+    <ol>
+      <li>Elige una tarea real.</li>
+      <li>Busca al menos tres Skills candidatas.</li>
+      <li>Completa esta tabla para cada una:</li>
+    </ol>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Skill</th><th>Origen</th><th>¿Description clara?</th><th>¿Procedimiento revisado?</th><th>¿Señales de alerta?</th><th>¿La instalarías?</th></tr></thead>
+        <tbody>
+          <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><strong>Criterio de evaluación:</strong> la decisión debe basarse en criterios objetivos, no solo en el nombre o la popularidad aparente.</p>
+  </div>
+
+  <h3>Proyecto 3 — Instalar dos Skills para el mismo agente</h3>
+  <div class="card">
+    <ol>
+      <li>Identifica el identificador de tu agente.</li>
+      <li>Instala dos Skills distintas, dirigidas explícitamente a ese agente:
+        <div class="copyblock"><pre class="copy-content">npx skills add owner/repo-uno --agent &lt;tu-agente&gt;
+npx skills add owner/repo-dos --agent &lt;tu-agente&gt;</pre></div>
+      </li>
+      <li>Lista las Skills instaladas.</li>
+      <li>Prueba una tarea real para cada una.</li>
+    </ol>
+    <p><strong>Resultado esperado:</strong> ambas activas y verificadas.</p>
+    <p><strong>Error frecuente:</strong> que sus propósitos se solapen y el agente mezcle criterios. Si ocurre, ajusta las descripciones o elimina una.</p>
+  </div>
+
+  <h3>Proyecto 4 — Crear una Skill sencilla desde cero</h3>
+  <div class="card">
+    <p><strong>Objetivo:</strong> escribir, probar y refinar tu primera Skill.</p>
+    <ol>
+      <li>Elige un objetivo que quepa en una frase. Ejemplo: “redactar respuestas de atención al cliente con tono empático y breve”.</li>
+      <li>Enumera 2–4 tareas concretas que cubrirá.</li>
+      <li>Escribe 2–3 frases de ejemplo que un usuario diría y que deberían activarla.</li>
+      <li>Define las entradas necesarias.</li>
+      <li>Escribe el procedimiento numerado.</li>
+      <li>Define criterios de calidad verificables.</li>
+      <li>Crea la carpeta:
+        <div class="copyblock"><pre class="copy-content">mkdir -p mis-skills/respuestas-atencion-cliente</pre></div>
+      </li>
+      <li>Escribe el archivo <code>SKILL.md</code> usando la plantilla siguiente.</li>
+      <li>Instálala localmente para probarla:
+        <div class="copyblock"><pre class="copy-content">npx skills add ./mis-skills/respuestas-atencion-cliente --agent &lt;tu-agente&gt;</pre></div>
+      </li>
+      <li>Pruébala con 3 peticiones reales.</li>
+      <li>Ajusta la descripción y el procedimiento según los resultados.</li>
+    </ol>
+    <h4>Plantilla reutilizable</h4>
+    <div class="copyblock">
+      <pre class="copy-content">---
+name: nombre-de-tu-skill
+description: Describe en 1-3 frases qué hace esta skill y cuándo debe usarse. Incluye ejemplos de peticiones del usuario que deberían activarla.
+---
+
+# Nombre de tu Skill (título legible)
+
+## Cuándo usar esta skill
+
+- Caso de uso 1
+- Caso de uso 2
+
+## Entradas esperadas
+
+- Qué información necesita el agente para aplicar esta skill.
+
+## Procedimiento
+
+1. Paso 1
+2. Paso 2
+3. Paso 3
+
+## Criterios de calidad
+
+- [ ] Criterio verificable 1
+- [ ] Criterio verificable 2
+
+## Ejemplos
+
+**Entrada:**
+...
+
+**Salida esperada:**
+...
+
+## Archivos relacionados (opcional)
+
+- `referencia.md`: descripción breve de qué contiene.</pre>
+    </div>
+    <ul class="checklist" data-checklist>
+      <li><label class="check"><input type="checkbox"> El objetivo cabe en una frase.</label></li>
+      <li><label class="check"><input type="checkbox"> La description incluye dominio, acción y ejemplo de activación.</label></li>
+      <li><label class="check"><input type="checkbox"> El procedimiento está numerado y sin ambigüedades.</label></li>
+      <li><label class="check"><input type="checkbox"> Hay al menos un ejemplo completo de entrada y salida.</label></li>
+      <li><label class="check"><input type="checkbox"> Hay una lista de comprobación final verificable.</label></li>
+      <li><label class="check"><input type="checkbox"> Se han definido casos límite o datos faltantes.</label></li>
+      <li><label class="check"><input type="checkbox"> No hay contradicciones internas.</label></li>
+    </ul>
+    <p class="small">Progreso de esta lista: <span class="check-count">0/0</span></p>
+  </div>
+
+  <h3>Proyecto 5 — Skill avanzada con archivo auxiliar</h3>
+  <div class="card">
+    <p><strong>Objetivo:</strong> crear una Skill más compleja que use una plantilla separada.</p>
+    <p>Estructura:</p>
+    <div class="copyblock">
+      <pre class="copy-content">mis-skills/generador-de-contratos/
+├── SKILL.md
+└── plantilla-contrato.md</pre>
+    </div>
+    <ol>
+      <li>En <code>SKILL.md</code>, referencia el archivo auxiliar: “Usa la estructura definida en <code>plantilla-contrato.md</code> como base”.</li>
+      <li>Incluye una lista de comprobación final con al menos 5 puntos verificables.</li>
+      <li>Instala y prueba con un caso sencillo y otro con datos incompletos.</li>
+    </ol>
+    <p><strong>Resultado esperado:</strong> el agente produce resultados consistentes y, ante datos incompletos, los señala en lugar de inventarlos.</p>
+    <div class="callout ok"><p><strong>Criterio de evaluación:</strong> si falta el nombre de una parte o una fecha, la Skill debe indicar “(sin asignar)” o pedir el dato, no rellenarlo con una invención.</p></div>
+  </div>
+
+  <h3>Proyecto 6 — Organizar una biblioteca personal</h3>
+  <div class="card">
+    <p>Estructura propuesta (es una recomendación organizativa, no un requisito técnico de la CLI):</p>
+    <div class="copyblock">
+      <pre class="copy-content">mi-biblioteca-de-skills/
+├── README.md
+├── CHANGELOG.md
+├── docs/
+│   ├── docs-generar-readme/
+│   │   └── SKILL.md
+│   └── docs-resumen-reuniones/
+│       └── SKILL.md
+├── qa/
+│   ├── qa-revisar-tests/
+│   │   └── SKILL.md
+│   └── qa-revisar-codigo-js/
+│       └── SKILL.md
+└── seguridad/
+    └── seguridad-checklist-despliegue/
+        └── SKILL.md</pre>
+    </div>
+    <ul>
+      <li>Usa nombres coherentes: <code>&lt;categoria&gt;-&lt;accion&gt;</code>.</li>
+      <li>Documenta para cada Skill: nombre, propósito, origen, agentes probados y fecha de revisión.</li>
+      <li>Mantén un <code>README.md</code> con el índice y un <code>CHANGELOG.md</code> con los cambios relevantes.</li>
+    </ul>
+  </div>
+
+  <h3>Proyecto 7 — Publicar un repositorio con Skills</h3>
+  <div class="card">
+    <p><strong>Objetivo:</strong> que otra persona pueda instalar tus Skills siguiendo solo tu documentación.</p>
+    <ol>
+      <li>Crea un repositorio en GitHub.</li>
+      <li>Conecta tu carpeta local:
+        <div class="copyblock"><pre class="copy-content">git remote add origin https://github.com/tu-usuario/mi-biblioteca-de-skills.git
+git branch -M main
+git push -u origin main</pre></div>
+      </li>
+      <li>Añade un archivo <code>LICENSE</code> adecuado.</li>
+      <li>Completa el <code>README.md</code> con el comando de instalación real:
+        <div class="copyblock"><pre class="copy-content">npx skills add tu-usuario/mi-biblioteca-de-skills</pre></div>
+      </li>
+      <li>Prueba la instalación desde otra carpeta o pide a otra persona que lo haga.</li>
+    </ol>
+    <p><strong>Criterio de evaluación:</strong> la instalación funciona sin explicaciones adicionales fuera del repositorio.</p>
+  </div>
+
+  <h3>Proyecto 8 — Diseñar una política de Skills</h3>
+  <div class="card">
+    <p>Redacta un documento <code>POLITICA-DE-SKILLS.md</code> que incluya:</p>
+    <ul>
+      <li>Quién puede instalar Skills de terceros y bajo qué revisión previa.</li>
+      <li>Con qué frecuencia se revisan actualizaciones.</li>
+      <li>Cómo se documenta cada Skill instalada: origen, agente, fecha, responsable.</li>
+      <li>Procedimiento ante una Skill sospechosa.</li>
+      <li>Convención de nombres y categorías.</li>
+      <li>Proceso de publicación de Skills propias.</li>
+    </ul>
+    <p>Después, simula un incidente en un entorno aislado, sin credenciales reales, y comprueba que tu procedimiento funciona.</p>
+  </div>
+
+  <h3>Plan de aprendizaje de 30 días</h3>
+  <div class="table-wrap">
+    <table>
+      <caption>Resumen del plan propuesto en el material de origen</caption>
+      <thead><tr><th>Días</th><th>Bloque</th><th>Objetivo principal</th></tr></thead>
+      <tbody>
+        <tr><td>1–5</td><td>Conceptos y entorno</td><td>Entender Skill, agente y CLI; preparar Node.js, terminal y arquitectura.</td></tr>
+        <tr><td>6–10</td><td>Descubrimiento e instalación</td><td>Explorar el catálogo, inspeccionar seguridad básica e instalar la primera Skill.</td></tr>
+        <tr><td>11–15</td><td>Agentes y configuración</td><td>Identificar tu agente, instalar por agente, comparar proyecto vs. global y resolver detección.</td></tr>
+        <tr><td>16–20</td><td>Creación</td><td>Estructura de <code>SKILL.md</code>, primera Skill propia, pruebas y Skill avanzada.</td></tr>
+        <tr><td>21–25</td><td>Mantenimiento y distribución</td><td>Actualizar, auditar seguridad, organizar biblioteca y publicar en GitHub.</td></tr>
+        <tr><td>26–30</td><td>Proyecto final</td><td>Política de Skills, simulación de incidente, repaso de comandos y evaluación final.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================
+     ERRORES
+     ============================================================ -->
+<section class="panel" id="panel-errores" role="tabpanel" aria-labelledby="tab-errores" hidden>
+  <p class="eyebrow">Módulos 13 y 14</p>
+  <h2>Errores, seguridad y resolución de problemas</h2>
+  <p class="lead">Este es el módulo de lectura obligatoria antes de instalar Skills de terceros de forma habitual. Una Skill es texto que un agente con capacidad de actuar puede interpretar como instrucciones de confianza.</p>
+
+  <h3>1. Riesgos reales de instalar instrucciones de terceros</h3>
+  <ol>
+    <li><strong>Instrucciones que inducen a ejecutar comandos destructivos</strong>: borrar archivos, forzar sobrescrituras, modificar configuraciones críticas.</li>
+    <li><strong>Intento de extraer información sensible</strong>: pedir que se muestren archivos <code>.env</code> o que se incluyan claves API “para depuración”.</li>
+    <li><strong>Conexiones a servidores externos no deseados</strong>: enviar datos del proyecto fuera de tu control.</li>
+    <li><strong>Instrucciones ambiguas o de baja calidad</strong>: resultados incorrectos con apariencia de fiabilidad.</li>
+    <li><strong>Dependencias ocultas en archivos auxiliares</strong>: contenido que no se revisa con el mismo cuidado que el archivo principal.</li>
+  </ol>
+
+  <h3>2. Inspección obligatoria antes de instalar</h3>
+  <ol>
+    <li>Abre el repositorio de origen en GitHub. No instales “a ciegas” solo por el nombre.</li>
+    <li>Lee el <code>SKILL.md</code> completo, de principio a fin.</li>
+    <li>Revisa todos los archivos auxiliares referenciados.</li>
+    <li>Busca palabras de alerta: <code>token</code>, <code>password</code>, <code>api key</code>, <code>secret</code>, <code>env</code>, <code>curl</code>, <code>borrar</code>, <code>delete</code>, <code>force</code>, <code>sudo</code>, <code>rm -rf</code>, URLs externas poco conocidas.</li>
+    <li>Revisa el historial de commits: actividad reciente, cambios sin explicación o abandono prolongado.</li>
+    <li>Revisa quién es el autor u organización: ¿es identificable?, ¿tiene trayectoria?</li>
+  </ol>
+
+  <h3>3. Señales de alerta y señales positivas</h3>
+  <div class="table-wrap">
+    <table>
+      <caption>Valorar la procedencia</caption>
+      <thead><tr><th>Señal positiva</th><th>Señal de alerta</th></tr></thead>
+      <tbody>
+        <tr><td>Organización o persona identificable y con trayectoria.</td><td>Cuenta anónima recién creada.</td></tr>
+        <tr><td>Documentación clara y coherente.</td><td>Descripción vaga que no explica el procedimiento.</td></tr>
+        <tr><td>Historial de commits activo y razonado.</td><td>Un único commit masivo sin explicación.</td></tr>
+        <tr><td>Licencia claramente indicada.</td><td>Ausencia total de licencia o información legal.</td></tr>
+        <tr><td>Comunidad visible: issues, estrellas, forks razonables.</td><td>Repositorio aislado sin ninguna interacción.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>4. Qué hacer ante una Skill sospechosa</h3>
+  <ol>
+    <li><strong>No la instales</strong> si tienes dudas razonables.</li>
+    <li>Si ya la instalaste, elimínala con el comando de desinstalación y revisa manualmente la carpeta para confirmar que no quedan restos.</li>
+    <li>Revisa si el agente llegó a ejecutar acciones basadas en esas instrucciones. Si usas Git, audita los cambios con <code>git status</code> y <code>git diff</code>.</li>
+    <li>Revoca y rota cualquier credencial que pueda haber quedado expuesta.</li>
+    <li>Documenta el incidente: qué Skill era, de dónde venía y qué hiciste.</li>
+  </ol>
+
+  <div class="callout danger">
+    <p><strong>Límite importante:</strong> ni la CLI ni el catálogo pueden garantizarte automáticamente que una Skill sea segura, correcta o esté libre de errores. Facilitan el descubrimiento y la instalación, pero la responsabilidad de revisar el contenido recae en ti.</p>
+  </div>
+
+  <h3>5. Problemas frecuentes: tabla de diagnóstico</h3>
+  <div class="table-wrap">
+    <table>
+      <caption>Síntoma, causa probable y solución</caption>
+      <thead><tr><th>Síntoma</th><th>Causa probable</th><th>Solución</th></tr></thead>
+      <tbody>
+        <tr><td>La CLI no se ejecuta.</td><td>Node.js/npm no instalados o versión muy antigua.</td><td>Comprueba <code>node -v</code> y <code>npm -v</code>; reinstala Node.js LTS.</td></tr>
+        <tr><td><code>npx</code> no se reconoce.</td><td>Node.js no está en el PATH.</td><td>Reinstala Node.js, reinicia la terminal.</td></tr>
+        <tr><td>Comando global no encontrado.</td><td>La carpeta global de npm no está en el PATH.</td><td>Usa <code>npx skills</code> o configura el PATH.</td></tr>
+        <tr><td>No se encuentran Skills.</td><td>Repositorio sin <code>SKILL.md</code>, ruta incorrecta o repositorio privado.</td><td>Revisa el repositorio, la ruta y tus permisos.</td></tr>
+        <tr><td><code>SKILL.md</code> inválido.</td><td>YAML mal formado, falta de <code>---</code>, dos puntos sin comillas.</td><td>Corrige el YAML o reporta el problema al autor.</td></tr>
+        <tr><td>El agente no detecta la Skill.</td><td>Ruta incorrecta, agente equivocado o sesión antigua.</td><td>Verifica la ruta, reinicia el agente y prueba una conversación nueva.</td></tr>
+        <tr><td>Instalación en ruta inesperada.</td><td>No se especificó el agente o el alcance; terminal en otra carpeta.</td><td>Comprueba <code>pwd</code>, elimina y reinstala con el flag correcto.</td></tr>
+        <tr><td>Errores de permisos <code>EACCES</code>.</td><td>Intento de escribir en una carpeta protegida.</td><td>Evita <code>sudo</code>; usa <code>npx</code> o configura npm global en tu usuario.</td></tr>
+        <tr><td>Repositorio privado inaccesible.</td><td>Falta autenticación con GitHub.</td><td>Configura SSH o un token de acceso personal.</td></tr>
+        <tr><td>La actualización no refleja cambios.</td><td>Caché, copia local o error de red.</td><td>Reinstala limpiamente la Skill si el comando de actualización no resuelve.</td></tr>
+        <tr><td>Skill duplicada.</td><td>Instalada para dos agentes o dos veces con nombres distintos.</td><td>Revisa el listado y elimina duplicados reales.</td></tr>
+        <tr><td>Dos Skills se contradicen.</td><td>Descripciones solapadas o procedimientos incompatibles.</td><td>Decide cuál prevalece; ajusta descripciones o elimina una.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <details class="fold">
+    <summary>Diagnóstico detallado: el agente no detecta la Skill</summary>
+    <div class="fold-body">
+      <ol>
+        <li>Confirma la ruta exacta donde se instaló.</li>
+        <li>Confirma que coincide con la ruta que documenta tu agente.</li>
+        <li>Reinicia completamente la aplicación o el proceso del agente.</li>
+        <li>Valida la cabecera YAML del <code>SKILL.md</code>.</li>
+        <li>Prueba una petición que use literalmente palabras de la <code>description</code>.</li>
+        <li>Si hay muchas Skills instaladas, reduce temporalmente el número para comprobar si hay competencia entre ellas.</li>
+      </ol>
+    </div>
+  </details>
+
+  <details class="fold">
+    <summary>Diagnóstico detallado: repositorio privado</summary>
+    <div class="fold-body">
+      <p>Para instalar desde un repositorio privado, tu sistema debe estar autenticado con GitHub. Los mecanismos habituales son Git configurado con credenciales, SSH o un token de acceso personal. <span class="tag tag-warn">VERIFICAR</span> qué mecanismo espera exactamente la CLI en su documentación.</p>
+      <p>Si el token caducó o no tiene permisos de lectura sobre ese repositorio, la instalación fallará aunque la URL sea correcta.</p>
+    </div>
+  </details>
+
+  <h3>6. Lista de comprobación de seguridad</h3>
+  <ul class="checklist" data-checklist>
+    <li><label class="check"><input type="checkbox"> He leído el <code>SKILL.md</code> completo, no solo el título.</label></li>
+    <li><label class="check"><input type="checkbox"> He revisado los archivos auxiliares referenciados.</label></li>
+    <li><label class="check"><input type="checkbox"> No pide compartir claves, tokens ni contraseñas.</label></li>
+    <li><label class="check"><input type="checkbox"> No incluye comandos destructivos sin justificación clara.</label></li>
+    <li><label class="check"><input type="checkbox"> El repositorio de origen tiene procedencia identificable.</label></li>
+    <li><label class="check"><input type="checkbox"> La <code>description</code> coincide con mi necesidad real.</label></li>
+    <li><label class="check"><input type="checkbox"> La he probado primero en un entorno no crítico.</label></li>
+  </ul>
+  <p class="small">Progreso de esta lista: <span class="check-count">0/0</span></p>
+
+  <div class="callout warn">
+    <p><strong>Regla final:</strong> nunca instales indiscriminadamente todas las Skills de un repositorio desconocido. Instala de una en una, revisando cada carpeta antes de incorporarla.</p>
+  </div>
+</section>
+
+<!-- ============================================================
+     RESUMEN
+     ============================================================ -->
+<section class="panel" id="panel-resumen" role="tabpanel" aria-labelledby="tab-resumen" hidden>
+  <p class="eyebrow">Módulo 19</p>
+  <h2>Resumen y manual de consulta rápida</h2>
+  <p class="lead">Glosario, comandos esenciales, plantillas, listas de comprobación, preguntas frecuentes y las ideas que deberías recordar.</p>
+
+  <h3>Glosario</h3>
+  <dl class="kv">
+    <dt>Agente de IA</dt><dd>Programa que usa un modelo de lenguaje y puede leer archivos, ejecutar herramientas y tomar decisiones en varios pasos.</dd>
+    <dt>Agent Skills</dt><dd>Formato abierto de habilidades reutilizables basado en archivos <code>SKILL.md</code>.</dd>
+    <dt>CLI</dt><dd>Interfaz de línea de comandos. En este tutorial, el programa <code>skills</code>.</dd>
+    <dt>Frontmatter</dt><dd>Cabecera YAML al inicio de un archivo Markdown, delimitada por <code>---</code>.</dd>
+    <dt>Instalación global</dt><dd>Skill disponible para cualquier proyecto que abras con tu usuario.</dd>
+    <dt>Instalación de proyecto</dt><dd>Skill disponible solo dentro de la carpeta de un proyecto concreto.</dd>
+    <dt>npm</dt><dd>Gestor de paquetes de Node.js.</dd>
+    <dt>npx</dt><dd>Herramienta para ejecutar paquetes de npm sin instalarlos permanentemente.</dd>
+    <dt>Repositorio</dt><dd>Proyecto alojado en GitHub u otra plataforma, que puede contener una o varias Skills.</dd>
+    <dt>Skill</dt><dd>Carpeta con un <code>SKILL.md</code> que define una habilidad reutilizable.</dd>
+    <dt>SKILL.md</dt><dd>Archivo principal de una Skill: cabecera YAML e instrucciones Markdown.</dd>
+    <dt>skills.sh</dt><dd>Catálogo web para descubrir Skills.</dd>
+    <dt>YAML</dt><dd>Formato de texto estructurado usado en la cabecera.</dd>
+  </dl>
+
+  <h3>Comandos esenciales</h3>
+  <div class="copyblock">
+    <pre class="copy-content">npx skills --help
+npx skills add &lt;origen&gt;
+npx skills add &lt;origen&gt; --agent &lt;nombre&gt;
+npx skills add &lt;origen&gt; --global
+npx skills list
+npx skills search "&lt;término&gt;"
+npx skills update [nombre]
+npx skills remove &lt;nombre&gt;
+npx skills init</pre>
+  </div>
+  <div class="callout warn"><p><strong>Verifica siempre con <code>--help</code>.</strong> Los nombres de subcomandos y flags pueden cambiar. Esta lista es un patrón, no una garantía de sintaxis exacta en tu versión.</p></div>
+
+  <h3>Opciones habituales</h3>
+  <div class="table-wrap">
+    <table>
+      <caption>Patrón general; confirma el nombre exacto</caption>
+      <thead><tr><th>Opción</th><th>Función</th></tr></thead>
+      <tbody>
+        <tr><td><code>--agent &lt;nombre&gt;</code></td><td>Selecciona el agente de destino.</td></tr>
+        <tr><td><code>--global</code></td><td>Instala a nivel de usuario, no solo de proyecto.</td></tr>
+        <tr><td><code>--skill &lt;nombre&gt;</code></td><td>Selecciona una Skill concreta dentro de un repositorio con varias.</td></tr>
+        <tr><td><code>--all</code></td><td>Selecciona todas las Skills disponibles de un origen.</td></tr>
+        <tr><td><code>--yes</code></td><td>Modo no interactivo; omite confirmaciones.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Plantilla de <code>SKILL.md</code></h3>
+  <div class="copyblock">
+    <pre class="copy-content">---
+name: nombre-de-tu-skill
+description: Qué hace y cuándo debe usarse, con ejemplos de activación.
+---
+
+# Título legible
+
+## Cuándo usar esta skill
+- ...
+
+## Entradas esperadas
+- ...
+
+## Procedimiento
+1. ...
+
+## Criterios de calidad
+- [ ] ...
+
+## Ejemplos
+**Entrada:** ...
+**Salida esperada:** ...</pre>
+  </div>
+
+  <h3>Lista de comprobación antes de instalar</h3>
+  <ul class="checklist" data-checklist>
+    <li><label class="check"><input type="checkbox"> He leído el <code>SKILL.md</code> completo.</label></li>
+    <li><label class="check"><input type="checkbox"> He revisado los archivos auxiliares.</label></li>
+    <li><label class="check"><input type="checkbox"> No pide claves, tokens ni contraseñas.</label></li>
+    <li><label class="check"><input type="checkbox"> No incluye comandos destructivos sin justificación.</label></li>
+    <li><label class="check"><input type="checkbox"> La procedencia es identificable.</label></li>
+    <li><label class="check"><input type="checkbox"> La descripción coincide con mi necesidad.</label></li>
+  </ul>
+  <p class="small">Progreso de esta lista: <span class="check-count">0/0</span></p>
+
+  <h3>Lista de comprobación antes de crear una Skill</h3>
+  <ul class="checklist" data-checklist>
+    <li><label class="check"><input type="checkbox"> El objetivo cabe en una frase.</label></li>
+    <li><label class="check"><input type="checkbox"> La descripción incluye dominio, acción y ejemplo de activación.</label></li>
+    <li><label class="check"><input type="checkbox"> El procedimiento está numerado y sin ambigüedades.</label></li>
+    <li><label class="check"><input type="checkbox"> Incluye al menos un ejemplo completo.</label></li>
+    <li><label class="check"><input type="checkbox"> Incluye una lista de comprobación final.</label></li>
+    <li><label class="check"><input type="checkbox"> Define el manejo de casos límite o datos faltantes.</label></li>
+  </ul>
+  <p class="small">Progreso de esta lista: <span class="check-count">0/0</span></p>
+
+  <h3>Preguntas frecuentes</h3>
+  <details class="fold">
+    <summary>¿Necesito saber programar para usar Skills?</summary>
+    <div class="fold-body"><p>No. Necesitas seguir procedimientos básicos de terminal, que este tutorial explica desde cero. Para crear Skills solo necesitas escribir texto estructurado en Markdown.</p></div>
+  </details>
+  <details class="fold">
+    <summary>¿Una Skill puede dañar mi ordenador?</summary>
+    <div class="fold-body"><p>Una Skill en sí es texto. El riesgo real depende de las acciones que el agente esté autorizado a ejecutar basándose en ese texto. Por eso la inspección previa y el módulo de seguridad son obligatorios.</p></div>
+  </details>
+  <details class="fold">
+    <summary>¿Todas las Skills funcionan con todos los agentes?</summary>
+    <div class="fold-body"><p>No necesariamente. Depende de qué agentes soporten el formato y de en qué carpeta se haya instalado. Verifica la documentación de tu agente.</p></div>
+  </details>
+  <details class="fold">
+    <summary>¿Puedo tener la misma Skill instalada para varios agentes?</summary>
+    <div class="fold-body"><p>Sí, instalándola repetidamente y especificando cada agente de destino, si la CLI lo permite.</p></div>
+  </details>
+  <details class="fold">
+    <summary>¿Qué pasa si edito una Skill mientras el agente la está usando?</summary>
+    <div class="fold-body"><p>Es recomendable iniciar una nueva sesión o conversación para que el agente vuelva a leer el archivo actualizado.</p></div>
+  </details>
+  <details class="fold">
+    <summary>¿Qué hago si dos Skills se contradicen?</summary>
+    <div class="fold-body"><p>Identifica las dos Skills implicadas, decide cuál debe prevalecer y ajusta sus descripciones para que no se solapen, o elimina la que sobra.</p></div>
+  </details>
+
+  <h3>Diez ideas para recordar</h3>
+  <ol>
+    <li>La CLI instala; el agente aplica.</li>
+    <li>Instalar la CLI no instala ninguna Skill.</li>
+    <li>Una Skill es una carpeta con un <code>SKILL.md</code>.</li>
+    <li>La <code>description</code> decide si la Skill se activa.</li>
+    <li>Instalar en el agente equivocado es el error más común.</li>
+    <li>Proyecto y global son alcances distintos.</li>
+    <li>Los comandos exactos deben verificarse con <code>--help</code>.</li>
+    <li>No instales Skills de terceros sin leerlas.</li>
+    <li>Actualiza con cuidado y prueba antes en un entorno no crítico.</li>
+    <li>Documenta qué tienes instalado, de dónde viene y con qué agente se probó.</li>
+  </ol>
+</section>
+
+<!-- ============================================================
+     FUENTES
+     ============================================================ -->
+<section class="panel" id="panel-fuentes" role="tabpanel" aria-labelledby="tab-fuentes" hidden>
+  <p class="eyebrow">Trazabilidad y verificación</p>
+  <h2>Fuentes y estado de verificación</h2>
+  <p class="lead">Este tutorial se basa en el documento <code>guia_definitiva_vercel_skills_ruben_sbarsky.md</code>. Las fuentes principales citadas por el material de origen son las siguientes.</p>
+
+  <h3>Fuentes principales</h3>
+  <div class="copyblock">
+    <ul class="copy-content">
+      <li>https://github.com/vercel-labs/skills</li>
+      <li>https://skills.sh/</li>
+      <li>https://www.npmjs.com/package/skills</li>
+      <li>https://nodejs.org/</li>
+      <li>https://git-scm.com/</li>
+      <li>https://github.com/</li>
+    </ul>
+  </div>
+  <ul>
+    <li><strong>Repositorio oficial:</strong> <a href="https://github.com/vercel-labs/skills" target="_blank" rel="noopener noreferrer">github.com/vercel-labs/skills</a></li>
+    <li><strong>Catálogo:</strong> <a href="https://skills.sh/" target="_blank" rel="noopener noreferrer">skills.sh</a></li>
+    <li><strong>Paquete npm:</strong> <a href="https://www.npmjs.com/package/skills" target="_blank" rel="noopener noreferrer">npmjs.com/package/skills</a></li>
+    <li><strong>Node.js:</strong> <a href="https://nodejs.org/" target="_blank" rel="noopener noreferrer">nodejs.org</a></li>
+    <li><strong>Git:</strong> <a href="https://git-scm.com/" target="_blank" rel="noopener noreferrer">git-scm.com</a></li>
+    <li><strong>GitHub:</strong> <a href="https://github.com/" target="_blank" rel="noopener noreferrer">github.com</a></li>
+  </ul>
+  <p class="small">Verifica cada enlace en el momento de la lectura. Si alguno no está disponible, búscalo por el nombre del proyecto y confirma que corresponde a la fuente oficial.</p>
+
+  <h3>Qué se considera documentado y estable</h3>
+  <div class="table-wrap">
+    <table>
+      <caption>Nivel de confianza del contenido</caption>
+      <thead><tr><th>Elemento</th><th>Nivel</th><th>Qué significa</th></tr></thead>
+      <tbody>
+        <tr><td>Formato <code>SKILL.md</code> con cabecera YAML</td><td><span class="tag tag-ok">Documentado</span></td><td>Ampliamente documentado como formato Agent Skills.</td></tr>
+        <tr><td>Concepto de agente, Skill, repositorio y catálogo</td><td><span class="tag tag-ok">Documentado</span></td><td>Estable en el ecosistema descrito.</td></tr>
+        <tr><td>Flujo general de instalación</td><td><span class="tag tag-ok">Documentado</span></td><td>La CLI instala desde un origen en la carpeta del agente.</td></tr>
+        <tr><td>Sintaxis exacta de subcomandos y flags</td><td><span class="tag tag-warn">Verificar</span></td><td>Puede cambiar entre versiones. Usa <code>--help</code>.</td></tr>
+        <tr><td>Identificadores y rutas exactas por agente</td><td><span class="tag tag-warn">Verificar</span></td><td>Dependen de cada agente y su documentación vigente.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Cómo verificar tú mismo</h3>
+  <div class="copyblock">
+    <pre class="copy-content">npx skills --help
+npx skills add --help
+npx skills --version</pre>
+  </div>
+  <p>Consulta también el README actualizado del repositorio y la documentación oficial de tu agente. La ayuda integrada refleja la versión que estás ejecutando y es la fuente más fiable para los nombres de comandos.</p>
+
+  <div class="callout warn">
+    <p><strong>Declaración de honestidad.</strong> El material de origen advierte que su autor no ejecutó comandos en una terminal real ni navegó en vivo durante su redacción. Este tutorial HTML se ha construido a partir de ese material y de las especificaciones del encargo. No se declaran pruebas de navegador, instalaciones reales, generación de PDF ni verificación en vivo de enlaces que no hayan podido ejecutarse. Las comprobaciones realizadas son de inspección estática del código y del contenido.</p>
+  </div>
+</section>
+
+<!-- ============================================================
+     CRÉDITOS
+     ============================================================ -->
+<section class="panel" id="panel-creditos" role="tabpanel" aria-labelledby="tab-creditos" hidden>
+  <p class="eyebrow">Autoría y versión</p>
+  <h2>Créditos</h2>
+
+  <div class="svg-mount" id="svgCredits" role="img" aria-label="Ilustración animada del ecosistema: una persona pide una tarea a un agente de IA; el agente consulta una carpeta con un archivo SKILL.md y aplica sus instrucciones."></div>
+  <p class="svg-caption">La ilustración muestra el flujo esencial: instrucciones empaquetadas, un agente que las lee y un resultado aplicado.</p>
+
+  <p class="author-name">Rubén Sbarsky</p>
+  <p class="author-role">Autor del tutorial</p>
+
+  <div class="card">
+    <h3>Información del documento</h3>
+    <dl class="kv">
+      <dt>Material de partida</dt><dd><code>guia_definitiva_vercel_skills_ruben_sbarsky.md</code></dd>
+      <dt>Enfoque</dt><dd>Tutorial interactivo para principiantes, basado en la metodología GAUNTLET y en las especificaciones del prompt maestro.</dd>
+      <dt>Fecha de creación</dt><dd>17/10/2026 — 09:58:11</dd>
+      <dt>Versión</dt><dd>V001</dd>
+      <dt>Nombre del archivo</dt><dd><code>tutorial_vercel_skills_V001.html</code></dd>
+      <dt>Verificación</dt><dd>Revisión estática del HTML, CSS y JavaScript. No se declaran pruebas en navegador, instalaciones reales ni generación de PDF.</dd>
+    </dl>
+    <p class="version-box">Versión V001 · 17/10/2026 — 09:58:11</p>
+  </div>
+
+  <div class="callout info">
+    <p><strong>Nota de verificación.</strong> Los comandos, flags, identificadores de agentes y rutas exactas deben confirmarse con <code>npx skills --help</code> y la documentación oficial vigente. Este tutorial conserva las marcas <span class="tag tag-warn">VERIFICAR</span> del material de origen para no presentar como probado lo que no lo está.</p>
+  </div>
+
+  <p class="small">Si detectas un error, una omisión o una instrucción que haya cambiado, documenta la versión de la CLI y del agente que estás usando antes de corregir el material.</p>
+</section>
+
+</main>
+
+<button id="toTop" type="button" aria-label="Volver arriba" title="Volver arriba">↑</button>
+
+<footer>
+  <p>Tutorial Vercel Skills para principiantes · Versión V001 · 17/10/2026 — 09:58:11</p>
+  <p>Basado en el material de Rubén Sbarsky. Verifica siempre la documentación oficial antes de ejecutar comandos en producción.</p>
+</footer>
+
+<div id="live" class="sr-only" aria-live="polite"></div>
+
+<!-- Fuente única del SVG. El JavaScript extrae la plantilla, elimina este nodo y monta instancias con IDs únicos. -->
+<div id="svgSource" hidden aria-hidden="true">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 340" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id="bg%UID%" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#0b1220"/>
+        <stop offset="1" stop-color="#111f36"/>
+      </linearGradient>
+      <linearGradient id="accent%UID%" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#38bdf8"/>
+        <stop offset="1" stop-color="#22d3ee"/>
+      </linearGradient>
+      <filter id="glow%UID%" x="-60%" y="-60%" width="220%" height="220%">
+        <feGaussianBlur stdDeviation="6" result="blur"/>
+        <feMerge>
+          <feMergeNode in="blur"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>
+    </defs>
+
+    <rect width="800" height="340" rx="20" fill="url(#bg%UID%)"/>
+    <g opacity=".28" stroke="#1e3a5f" stroke-width="1">
+      <path d="M40 70 H760"/>
+      <path d="M40 270 H760"/>
+      <path d="M120 40 V300"/>
+      <path d="M680 40 V300"/>
+    </g>
+
+    <!-- Resplandor del agente -->
+    <circle cx="400" cy="170" r="70" fill="#38bdf8" opacity=".10">
+      <animate attributeName="r" values="62;78;62" dur="4.5s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values=".06;.18;.06" dur="4.5s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Nodo usuario -->
+    <g>
+      <rect x="40" y="120" width="170" height="100" rx="14" fill="#111c31" stroke="#1e3a5f" stroke-width="1.5"/>
+      <circle cx="125" cy="150" r="13" fill="none" stroke="#38bdf8" stroke-width="2"/>
+      <circle cx="125" cy="146" r="4" fill="#38bdf8"/>
+      <path d="M116 157c3-5 15-5 18 0" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round"/>
+      <text x="125" y="190" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" font-weight="700" fill="#e2e8f0">USUARIO</text>
+      <text x="125" y="207" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10.5" fill="#94a3b8">pide una tarea</text>
+    </g>
+
+    <!-- Nodo agente -->
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0 0;0 -5;0 0" dur="5.5s" repeatCount="indefinite"/>
+      <rect x="305" y="95" width="190" height="150" rx="18" fill="#0f172a" stroke="#38bdf8" stroke-width="1.5"/>
+      <circle cx="400" cy="145" r="24" fill="none" stroke="url(#accent%UID%)" stroke-width="2.5"/>
+      <circle cx="400" cy="145" r="8" fill="#38bdf8" filter="url(#glow%UID%)">
+        <animate attributeName="r" values="6;9;6" dur="2.2s" repeatCount="indefinite"/>
+      </circle>
+      <text x="400" y="190" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" font-weight="700" fill="#e2e8f0">AGENTE IA</text>
+      <text x="400" y="207" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10.5" fill="#94a3b8">lee la Skill</text>
+      <g fill="#38bdf8">
+        <circle cx="360" cy="225" r="3">
+          <animate attributeName="opacity" values=".2;1;.2" dur="2.4s" begin="0s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="380" cy="225" r="3">
+          <animate attributeName="opacity" values=".2;1;.2" dur="2.4s" begin=".35s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="400" cy="225" r="3">
+          <animate attributeName="opacity" values=".2;1;.2" dur="2.4s" begin=".7s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="420" cy="225" r="3">
+          <animate attributeName="opacity" values=".2;1;.2" dur="2.4s" begin="1.05s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="440" cy="225" r="3">
+          <animate attributeName="opacity" values=".2;1;.2" dur="2.4s" begin="1.4s" repeatCount="indefinite"/>
+        </circle>
+      </g>
+    </g>
+
+    <!-- Nodo carpeta SKILL.md -->
+    <g>
+      <rect x="590" y="110" width="170" height="120" rx="14" fill="#111c31" stroke="#1e3a5f" stroke-width="1.5"/>
+      <path d="M610 138h42l8 10h78v54h-128z" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M628 165h64M628 177h48" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+      <text x="675" y="205" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" font-weight="700" fill="#e2e8f0">SKILL.md</text>
+      <text x="675" y="221" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10.5" fill="#94a3b8">instrucciones</text>
+    </g>
+
+    <!-- Flechas animadas -->
+    <g>
+      <path d="M212 170 H298" fill="none" stroke="#38bdf8" stroke-width="2" stroke-dasharray="6 8" opacity=".9">
+        <animate attributeName="stroke-dashoffset" values="0;-28" dur="1.2s" repeatCount="indefinite"/>
+      </path>
+      <polygon points="298,164 308,170 298,176" fill="#38bdf8"/>
+      <path d="M498 170 H586" fill="none" stroke="#38bdf8" stroke-width="2" stroke-dasharray="6 8" opacity=".9">
+        <animate attributeName="stroke-dashoffset" values="0;-28" dur="1.2s" repeatCount="indefinite"/>
+      </path>
+      <polygon points="586,164 596,170 586,176" fill="#38bdf8"/>
+    </g>
+
+    <!-- Pulsos viajeros -->
+    <circle r="4.5" fill="#22d3ee" filter="url(#glow%UID%)">
+      <animateMotion path="M212,170 L298,170" dur="3.2s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;1;1;0" dur="3.2s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="4.5" fill="#22d3ee" filter="url(#glow%UID%)">
+      <animateMotion path="M498,170 L586,170" dur="3.2s" begin="1.1s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;1;1;0" dur="3.2s" begin="1.1s" repeatCount="indefinite"/>
+    </circle>
+
+    <text x="400" y="312" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#38bdf8" letter-spacing="1.5">INSTALA · DETECTA · APLICA</text>
+  </svg>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ============================================================
+     UTILIDADES
+     ============================================================ */
+  var store = {
+    get: function (key, fallback) {
+      try {
+        var value = localStorage.getItem(key);
+        return value === null ? fallback : value;
+      } catch (e) {
+        return fallback;
+      }
+    },
+    set: function (key, value) {
+      try { localStorage.setItem(key, value); } catch (e) { /* almacenamiento no disponible */ }
+    }
+  };
+
+  function $(selector, root) { return (root || document).querySelector(selector); }
+  function $$(selector, root) { return Array.prototype.slice.call((root || document).querySelectorAll(selector)); }
+  function escapeHTML(text) {
+    return String(text).replace(/[&<>"']/g, function (character) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character];
+    });
+  }
+  function announce(message) {
+    var live = document.getElementById('live');
+    if (live) {
+      live.textContent = '';
+      window.setTimeout(function () { live.textContent = message; }, 30);
+    }
+  }
+
+  /* ============================================================
+     PESTAÑAS
+     ============================================================ */
+  var tabIds = ['inicio', 'conceptos', 'procedimiento', 'practica', 'errores', 'resumen', 'fuentes', 'creditos'];
+  var tabButtons = {};
+  var panels = {};
+  tabIds.forEach(function (id) {
+    tabButtons[id] = document.getElementById('tab-' + id);
+    panels[id] = document.getElementById('panel-' + id);
+  });
+
+  var currentTab = 'inicio';
+  var homeSvg = document.getElementById('svgHome');
+  var creditsSvg = document.getElementById('svgCredits');
+
+  function updateProgress() {
+    var doc = document.documentElement;
+    var scrollTop = window.pageYOffset || doc.scrollTop || 0;
+    var max = Math.max(0, doc.scrollHeight - window.innerHeight);
+    var percent = max > 0 ? Math.min(100, Math.max(0, (scrollTop / max) * 100)) : 0;
+    var bar = document.getElementById('progressBar');
+    var wrap = document.getElementById('progressWrap');
+    if (bar) { bar.style.width = percent + '%'; }
+    if (wrap) { wrap.setAttribute('aria-valuenow', String(Math.round(percent))); }
+  }
+
+  function restartSVG(container) {
+    if (!container) { return; }
+    var svg = container.querySelector('svg');
+    if (svg && typeof svg.setCurrentTime === 'function') {
+      try { svg.setCurrentTime(0); return; } catch (e) { /* se remonta */ }
+    }
+    if (!svg) { mountSVG(container, true); }
+  }
+
+  function activateTab(id, options) {
+    options = options || {};
+    if (tabIds.indexOf(id) === -1) { id = 'inicio'; }
+    tabIds.forEach(function (key) {
+      var selected = key === id;
+      if (panels[key]) { panels[key].hidden = !selected; }
+      if (tabButtons[key]) {
+        tabButtons[key].setAttribute('aria-selected', selected ? 'true' : 'false');
+        tabButtons[key].tabIndex = selected ? 0 : -1;
+      }
+    });
+    currentTab = id;
+    if (options.updateHash !== false) {
+      try { history.replaceState(null, '', '#' + id); } catch (e) { /* historial no disponible */ }
+    }
+    if (id === 'inicio') {
+      mountSVG(homeSvg);
+      restartSVG(homeSvg);
+    }
+    if (id === 'creditos') {
+      mountSVG(creditsSvg);
+      restartSVG(creditsSvg);
+    }
+    if (options.scroll !== false) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    updateProgress();
+  }
+
+  tabIds.forEach(function (id) {
+    var button = tabButtons[id];
+    if (!button) { return; }
+    button.addEventListener('click', function () { activateTab(id); });
+    button.addEventListener('keydown', function (event) {
+      var index = tabIds.indexOf(id);
+      var next = null;
+      if (event.key === 'ArrowRight') { next = tabIds[(index + 1) % tabIds.length]; }
+      if (event.key === 'ArrowLeft') { next = tabIds[(index - 1 + tabIds.length) % tabIds.length]; }
+      if (event.key === 'Home') { next = tabIds[0]; }
+      if (event.key === 'End') { next = tabIds[tabIds.length - 1]; }
+      if (next) {
+        event.preventDefault();
+        activateTab(next);
+        if (tabButtons[next]) { tabButtons[next].focus(); }
+      }
+    });
+  });
+
+  /* Enlaces internos que apuntan a una pestaña */
+  document.addEventListener('click', function (event) {
+    var link = event.target.closest ? event.target.closest('a[href^="#"]') : null;
+    if (!link) { return; }
+    var id = link.getAttribute('href').slice(1);
+    if (tabIds.indexOf(id) !== -1) {
+      event.preventDefault();
+      activateTab(id);
+    }
+  });
+
+  window.addEventListener('hashchange', function () {
+    var id = (window.location.hash || '').replace('#', '');
+    if (tabIds.indexOf(id) !== -1) { activateTab(id, { scroll: false }); }
+  });
+
+  /* ============================================================
+     SVG COMPARTIDO
+     ============================================================ */
+  var svgSource = document.getElementById('svgSource');
+  var SVG_TEMPLATE = svgSource ? svgSource.innerHTML : '';
+  if (svgSource && svgSource.parentNode) { svgSource.parentNode.removeChild(svgSource); }
+  var svgCounter = 0;
+
+  function buildSVG(uid, animated) {
+    var markup = SVG_TEMPLATE.replace(/%UID%/g, uid);
+    if (!animated) {
+      markup = markup
+        .replace(/<animateTransform\b[^>]*\/?>(?:<\/animateTransform>)?/g, '')
+        .replace(/<animateMotion\b[^>]*\/?>(?:<\/animateMotion>)?/g, '')
+        .replace(/<animate\b[^>]*\/?>(?:<\/animate>)?/g, '');
+    }
+    return markup;
+  }
+
+  function fallbackSVG(container, uid) {
+    try {
+      var staticMarkup = buildSVG(uid + '_static', false);
+      var dataUri = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(staticMarkup);
+      container.innerHTML = '<img src="' + dataUri + '" alt="" data-fallback="true">';
+    } catch (e) {
+      container.innerHTML = '<p class="small" style="padding:1rem;text-align:center">No se pudo cargar la ilustración. El contenido textual del tutorial sigue disponible.</p>';
+    }
+  }
+
+  function mountSVG(container, force) {
+    if (!container) { return; }
+    if (container.getAttribute('data-mounted') === '1' && !force) { return; }
+    container.setAttribute('data-mounted', '1');
+    container.innerHTML = '';
+    var uid = 's' + (++svgCounter) + '_' + String(container.id || 'svg').replace(/[^a-zA-Z0-9]/g, '');
+    try {
+      container.innerHTML = buildSVG(uid, true);
+      var svg = container.querySelector('svg');
+      if (!svg) { throw new Error('SVG no montado'); }
+      svg.setAttribute('aria-hidden', 'true');
+      svg.setAttribute('focusable', 'false');
+    } catch (error) {
+      fallbackSVG(container, uid);
+    }
+  }
+
+  /* Repara un contenedor visible que se haya quedado vacío. */
+  window.setInterval(function () {
+    $$('.panel:not([hidden]) .svg-mount').forEach(function (container) {
+      if (!container.querySelector('svg') && !container.querySelector('img')) {
+        mountSVG(container, true);
+      }
+    });
+  }, 3000);
+
+  /* ============================================================
+     TEMA Y TAMAÑO DE LETRA
+     ============================================================ */
+  var themeToggle = document.getElementById('themeToggle');
+  var fontMinus = document.getElementById('fontMinus');
+  var fontPlus = document.getElementById('fontPlus');
+  var fontPercent = parseInt(store.get('vs-font', '100'), 10);
+  if (isNaN(fontPercent)) { fontPercent = 100; }
+
+  function applyTheme(theme) {
+    var isLight = theme === 'light';
+    document.documentElement.setAttribute('data-theme', isLight ? 'light' : 'dark');
+    if (themeToggle) {
+      themeToggle.textContent = isLight ? 'Tema oscuro' : 'Tema claro';
+      themeToggle.setAttribute('aria-pressed', isLight ? 'true' : 'false');
+    }
+    store.set('vs-theme', isLight ? 'light' : 'dark');
+  }
+
+  function applyFont() {
+    fontPercent = Math.max(85, Math.min(125, fontPercent));
+    document.documentElement.style.fontSize = fontPercent + '%';
+    if (fontMinus) { fontMinus.disabled = fontPercent <= 85; }
+    if (fontPlus) { fontPlus.disabled = fontPercent >= 125; }
+    store.set('vs-font', String(fontPercent));
+  }
+
+  if (themeToggle) {
+    themeToggle.addEventListener('click', function () {
+      var next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+      applyTheme(next);
+      announce(next === 'light' ? 'Tema claro activado' : 'Tema oscuro activado');
+    });
+  }
+  if (fontMinus) {
+    fontMinus.addEventListener('click', function () {
+      fontPercent -= 5;
+      applyFont();
+      announce('Tamaño de letra: ' + fontPercent + '%');
+    });
+  }
+  if (fontPlus) {
+    fontPlus.addEventListener('click', function () {
+      fontPercent += 5;
+      applyFont();
+      announce('Tamaño de letra: ' + fontPercent + '%');
+    });
+  }
+  applyTheme(store.get('vs-theme', 'dark') === 'light' ? 'light' : 'dark');
+  applyFont();
+
+  /* ============================================================
+     BOTONES COPIAR
+     ============================================================ */
+  function getCopyText(target) {
+    if (!target) { return ''; }
+    if (target.matches('ul, ol')) {
+      return Array.prototype.map.call(target.children, function (item) {
+        return item.textContent.trim();
+      }).join('\n');
+    }
+    return target.textContent;
+  }
+
+  function feedbackCopy(button, text) {
+    var original = button.getAttribute('data-original') || button.textContent;
+    button.setAttribute('data-original', original);
+    button.textContent = text;
+    button.classList.add('copied');
+    window.setTimeout(function () {
+      button.textContent = original;
+      button.classList.remove('copied');
+    }, 1700);
+  }
+
+  function copyText(text, button) {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(function () {
+        feedbackCopy(button, '¡COPIADO!');
+        announce('Contenido copiado al portapapeles');
+      }).catch(function () {
+        legacyCopy(text, button);
+      });
+    } else {
+      legacyCopy(text, button);
+    }
+  }
+
+  function legacyCopy(text, button) {
+    var textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.top = '-1000px';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(textarea);
+    if (ok) {
+      feedbackCopy(button, '¡COPIADO!');
+      announce('Contenido copiado al portapapeles');
+    } else {
+      feedbackCopy(button, 'COPIA MANUAL');
+      window.prompt('El portapapeles no está disponible. Copia el texto manualmente:', text);
+    }
+  }
+
+  $$('.copyblock').forEach(function (block) {
+    if (block.querySelector('.copy-btn')) { return; }
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'copy-btn';
+    button.textContent = 'COPIAR';
+    button.setAttribute('aria-label', 'Copiar el contenido de este bloque');
+    block.insertBefore(button, block.firstChild);
+  });
+
+  document.addEventListener('click', function (event) {
+    var button = event.target.closest ? event.target.closest('.copy-btn') : null;
+    if (!button) { return; }
+    var block = button.closest('.copyblock');
+    var target = block ? block.querySelector('.copy-content') : null;
+    if (target) { copyText(getCopyText(target), button); }
+  });
+
+  /* ============================================================
+     LISTAS DE COMPROBACIÓN
+     ============================================================ */
+  var checkboxes = $$('input[type="checkbox"]');
+  checkboxes.forEach(function (checkbox, index) {
+    var id = checkbox.getAttribute('data-check') || ('chk-' + (index + 1));
+    checkbox.setAttribute('data-check', id);
+    checkbox.checked = store.get('vs-check-' + id, '0') === '1';
+    checkbox.addEventListener('change', function () {
+      store.set('vs-check-' + id, checkbox.checked ? '1' : '0');
+      updateChecklistCounts();
+    });
+  });
+
+  function updateChecklistCounts() {
+    $$('[data-checklist]').forEach(function (list) {
+      var boxes = $$('input[type="checkbox"]', list);
+      var checked = boxes.filter(function (box) { return box.checked; }).length;
+      var output = list.querySelector('.check-count') || list.parentNode.querySelector('.check-count');
+      if (output) { output.textContent = checked + '/' + boxes.length; }
+    });
+  }
+  updateChecklistCounts();
+
+  /* ============================================================
+     BUSCADOR
+     ============================================================ */
+  var searchToggle = document.getElementById('searchToggle');
+  var searchBar = document.getElementById('searchBar');
+  var searchInput = document.getElementById('searchInput');
+  var searchResults = document.getElementById('searchResults');
+  var searchClose = document.getElementById('searchClose');
+  var searchIndex = [];
+  var tabLabels = {
+    inicio: 'Inicio',
+    conceptos: 'Conceptos',
+    procedimiento: 'Procedimiento',
+    practica: 'Práctica',
+    errores: 'Errores',
+    resumen: 'Resumen',
+    fuentes: 'Fuentes',
+    creditos: 'Créditos'
+  };
+
+  function buildSearchIndex() {
+    searchIndex = [];
+    tabIds.forEach(function (id) {
+      var panel = panels[id];
+      if (!panel) { return; }
+      $$('h2, h3, h4, p, li, td, th', panel).forEach(function (element) {
+        if (element.closest('.no-search')) { return; }
+        var text = (element.textContent || '').replace(/\s+/g, ' ').trim();
+        if (text.length < 25) { return; }
+        searchIndex.push({
+          tab: id,
+          element: element,
+          text: text.toLowerCase(),
+          raw: text,
+          weight: element.tagName === 'H2' ? 1 : element.tagName === 'H3' ? 2 : element.tagName === 'H4' ? 3 : 4
+        });
+      });
+    });
+  }
+
+  function snippet(text, query) {
+    var index = text.toLowerCase().indexOf(query);
+    if (index === -1) { return text.slice(0, 150); }
+    var start = Math.max(0, index - 55);
+    var end = Math.min(text.length, index + 110);
+    return (start > 0 ? '…' : '') + text.slice(start, end) + (end < text.length ? '…' : '');
+  }
+
+  function runSearch() {
+    if (!searchInput || !searchResults) { return; }
+    var query = searchInput.value.trim().toLowerCase();
+    searchResults.innerHTML = '';
+    if (query.length < 2) {
+      searchResults.innerHTML = '<p class="search-empty">Escribe al menos dos caracteres.</p>';
+      return;
+    }
+    var seen = {};
+    var matches = [];
+    searchIndex.forEach(function (item) {
+      if (item.text.indexOf(query) === -1) { return; }
+      var key = item.tab + '|' + item.raw.slice(0, 90);
+      if (seen[key]) { return; }
+      seen[key] = true;
+      matches.push(item);
+    });
+    matches.sort(function (a, b) {
+      if (a.weight !== b.weight) { return a.weight - b.weight; }
+      return a.raw.length - b.raw.length;
+    });
+    matches = matches.slice(0, 18);
+    if (!matches.length) {
+      searchResults.innerHTML = '<p class="search-empty">No se encontraron coincidencias. Prueba con otra palabra.</p>';
+      return;
+    }
+    matches.forEach(function (item) {
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'search-result';
+      button.innerHTML = '<span class="sr-tab">' + escapeHTML(tabLabels[item.tab] || item.tab) + '</span>' +
+        '<span class="sr-text">' + escapeHTML(snippet(item.raw, query)) + '</span>';
+      button.addEventListener('click', function () {
+        activateTab(item.tab, { scroll: false });
+        window.setTimeout(function () {
+          try {
+            item.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            item.element.classList.add('flash');
+            window.setTimeout(function () { item.element.classList.remove('flash'); }, 1700);
+          } catch (e) { /* el elemento sigue visible */ }
+        }, 80);
+        closeSearch(false);
+      });
+      searchResults.appendChild(button);
+    });
+  }
+
+  function openSearch() {
+    if (!searchBar) { return; }
+    searchBar.hidden = false;
+    if (searchToggle) { searchToggle.setAttribute('aria-expanded', 'true'); }
+    if (searchInput) { searchInput.focus(); }
+  }
+
+  function closeSearch(reset) {
+    if (!searchBar) { return; }
+    searchBar.hidden = true;
+    if (searchToggle) {
+      searchToggle.setAttribute('aria-expanded', 'false');
+      searchToggle.focus();
+    }
+    if (reset && searchInput) { searchInput.value = ''; }
+    if (reset && searchResults) { searchResults.innerHTML = ''; }
+  }
+
+  if (searchToggle) {
+    searchToggle.addEventListener('click', function () {
+      if (searchBar && searchBar.hidden) { openSearch(); } else { closeSearch(false); }
+    });
+  }
+  if (searchClose) {
+    searchClose.addEventListener('click', function () { closeSearch(true); });
+  }
+  if (searchInput) {
+    var searchTimer = null;
+    searchInput.addEventListener('input', function () {
+      window.clearTimeout(searchTimer);
+      searchTimer = window.setTimeout(runSearch, 120);
+    });
+    searchInput.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') { closeSearch(true); }
+    });
+  }
+
+  /* ============================================================
+     PROGRESO, VOLVER ARRIBA E IMPRESIÓN
+     ============================================================ */
+  var toTop = document.getElementById('toTop');
+  var ticking = false;
+  function onScroll() {
+    if (ticking) { return; }
+    ticking = true;
+    window.requestAnimationFrame(function () {
+      updateProgress();
+      if (toTop) {
+        if ((window.pageYOffset || 0) > 420) { toTop.classList.add('show'); }
+        else { toTop.classList.remove('show'); }
+      }
+      ticking = false;
+    });
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', updateProgress);
+  if (toTop) {
+    toTop.addEventListener('click', function () {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+
+  var printState = null;
+
+  function preparePrint() {
+    if (printState) { return; }
+    var closedDetails = [];
+    $$('details').forEach(function (details) {
+      if (!details.open) {
+        closedDetails.push(details);
+        details.open = true;
+      }
+    });
+    $$('.svg-mount').forEach(function (container) {
+      if (!container.querySelector('svg') && !container.querySelector('img')) {
+        mountSVG(container, true);
+      }
+      var svg = container.querySelector('svg');
+      if (svg && typeof svg.pauseAnimations === 'function') {
+        try {
+          svg.pauseAnimations();
+          svg.setCurrentTime(2);
+        } catch (e) { /* se conserva el estado actual */ }
+      }
+    });
+    document.body.classList.add('printing');
+    printState = { closedDetails: closedDetails };
+  }
+
+  function restorePrint() {
+    if (!printState) { return; }
+    printState.closedDetails.forEach(function (details) { details.open = false; });
+    $$('.svg-mount svg').forEach(function (svg) {
+      if (typeof svg.unpauseAnimations === 'function') {
+        try { svg.unpauseAnimations(); } catch (e) { /* sin efecto */ }
+      }
+    });
+    document.body.classList.remove('printing');
+    printState = null;
+  }
+
+  window.addEventListener('beforeprint', preparePrint);
+  window.addEventListener('afterprint', restorePrint);
+
+  var printBtn = document.getElementById('printBtn');
+  if (printBtn) {
+    printBtn.addEventListener('click', function () {
+      try {
+        preparePrint();
+        window.print();
+      } catch (error) {
+        restorePrint();
+        window.alert('No se pudo abrir el diálogo de impresión. Abre este archivo directamente en el navegador y utiliza Ctrl+P o Cmd+P.');
+      }
+    });
+  }
+
+  /* ============================================================
+     INICIALIZACIÓN
+     ============================================================ */
+  buildSearchIndex();
+
+  var initialHash = (window.location.hash || '').replace('#', '');
+  var initialTab = tabIds.indexOf(initialHash) !== -1 ? initialHash : 'inicio';
+  activateTab(initialTab, { scroll: false, updateHash: false });
+  updateProgress();
+
+  /* Si el SVG de Inicio no se montó por alguna razón, se reintenta. */
+  window.setTimeout(function () {
+    mountSVG(homeSvg);
+    if (initialTab === 'creditos') { mountSVG(creditsSvg); }
+  }, 120);
+})();
+</script>
+</body>
+</html>
